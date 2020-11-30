@@ -96,10 +96,10 @@ On the background, this will:
      * any extra kwargs passed to the enroll call
   9. the enrollment task returns True if the enrollment has been successful or False on failure
   10. The database record is enriched with timestamp, enrollment status and user instance.
-  11. user is redirected via 302 to the redirection success or failure url :
-     * urls passed to enroll function
-     * urls retrieved from task handler
-     * default urls from flask configuration
+  11. user is redirected via 302 to the redirection success or failure url:
+      * urls passed to enroll function
+      * urls retrieved from task handler
+      * default urls from flask configuration
 
 **Note:** once the enrollment link has been consumed, it can not be reused by a different user.
 
