@@ -1,0 +1,16 @@
+# -*- coding: utf-8 -*-
+
+include LICENSE
+recursive-exclude tests *.py
+exclude .coveragerc
+exclude .pydocstyle
+exclude Dockerfile
+exclude docker-compose
+exclude pytest.ini
+exclude *.yml
+exclude run-tests.sh
+include *.rst
+include *.md
+
+recursive-include oarepo_enrollment *.py
+recursive-exclude tests

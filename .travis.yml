@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2020 UCT Prague.
+#
+# oarepo-validate is free software; you can redistribute it and/or modify it under
+# the terms of the MIT License; see LICENSE file for more details.
+
+notifications:
+  email: false
+
+dist: xenial
+
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+
+cache:
+  - pip
+
+python:
+- '3.8'
+
+
+before_install:
+  - travis_retry pip install --upgrade pip setuptools py
+  - "travis_retry pip install twine wheel coveralls requirements-builder pip-tools"
+  - "requirements-builder --level=pypi setup.py > .travis-release-requirements.in"
+  - "pip-compile -U --verbose -o .travis-release-requirements.txt .travis-release-requirements.in"
+  - cat .travis-release-requirements.txt
+
+install:
+  - travis_retry pip install -r .travis-release-requirements.txt
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+# check if release tag is the same as version.py tag
+before_deploy:
+- |-
+  SRCTAG=$(cat oarepo_validate/version.py | grep '__version__' | sed 's/__version__//' | sed 's/=//g' | sed 's/"//g' | sed "s/'//g" | sed 's/[ \t\n]//g')
+  test $SRCTAG == $TRAVIS_TAG
+
+deploy:
+  provider: pypi
+  user: "__token__"
+  password:
+    secure: "lcuHh6z3M3jjRLOBHF37dcYy+ARd+Q2W9QSJw6yu+NWpbLZd+gsJ9BNibZp3LYqD7KoXH+GcRMoiLvQ0YSSHgOj2yny8NwzNDFt3E81HuUlHNRduBwoLIg3/hUFeqNKS80e6cQLUzMjYrTwAd62QDEF8TQXD1tB2pojkMekPKp1c+dOf5qSehlO0O88Om0LfB+fUzCrZiEMjcxl3Rla7mUecOOTA64lPRMO419W1vSEdDd5saipl86E2l/ddh8x24jrTv3AeXa7vsdEx52p7AR9ZabBbOTh+kursxWGkUprSEeKuFrkzpFf1ydCycT10sk1GLjFjh8dWHATgtpmhfZucbAwdYYvjCpoldD62ukSAs5Zd/R+nhR/Z5jyFBhLBWlYtMssCXfJjI+eIk97pW3Eg8P/3qiWs1+V1bhXNfIH51fq9QWc1vJQSYyu8VSD3Hb+q0rBy1ja9/z3PdhfIbW4c1fyzZVQtW1mDOKbIYFORmR81u9aoN/+pR9rd1s6KyQR+ATPNCzNmC8N6Wt1m+3ZyEH0JDG/c9mhd8rfJZ48znCmgaA7FHtQtr8E2ik8BjCFlDyQkRpQYOUgO2TJ7WpQ/HLQBctvENLdG2TXZO3v/n+3Xfnh8o6xVYNb2DwJr5dKpytzfATA8p98hhde727Zn1MI7RTkEISKAlzKmsjs="
+  on:
+    tags: true
+    branch: master
+  distributions: "sdist bdist_wheel"
+  skip_existing: true
