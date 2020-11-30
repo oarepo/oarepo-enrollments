@@ -193,6 +193,14 @@ class EnrollmentTask:
      raise NotImplementedError('Implement this')
 
   @property
+  def accept_message(self):
+     return None
+
+  @property
+  def accept_url(self):
+     return None
+
+  @property
   def success_url(self):
      return None
 
@@ -201,11 +209,11 @@ class EnrollmentTask:
      return None
 
   @property
-  def accept_message(self):
+  def success_message(self):
      return None
 
   @property
-  def accept_url(self):
+  def failure_message(self):
      return None
 ```
 
