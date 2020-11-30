@@ -180,7 +180,7 @@ The ``mode`` parameter can be:
   * ``user`` - if the user has already registered, an instance of ``invenio_accounts.models.User``
   * ``language`` - language parameter
 
-#### ``EnrollmentResult``
+#### ``EnrollmentTask``
 
 ```python
 from oarepo_enrollment.models import Enrollment
