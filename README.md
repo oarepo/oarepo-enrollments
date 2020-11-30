@@ -58,12 +58,10 @@ To enroll user, call
 ```python
 
 from oarepo_enrollment import enroll
-from flask_login import current_user
 
 enroll(
     task='assign_role',
     recipient='sample.user@test.com',
-    sender=current_user,
     subject='You have become a curator !',
     body="""
 Dear user,
@@ -151,8 +149,8 @@ from oarepo_enrollment import enroll, ENROLL_MANUALLY, ENROLL_AUTOMATICALLY, ENR
 def enroll(
     task: str,
     recipient: str,
-    sender: invenio_accounts.models.User,
-    sender_email: str,       # optional
+    sender: invenio_accounts.models.User,  # optional, current_user is used if not specified
+    sender_email: str,       # optional, sender's email is used if not specified
     subject: str,            # jinja template
     body: str,               # jinja template
     html: bool,              # set true if the body is a html document
@@ -206,4 +204,7 @@ OAREPO_ENROLLMENT_DEFAULT_SUCCESS_URL = '/enroll/success/:id'
 
 # default url on failure (if not specified by the task or caller)
 OAREPO_ENROLLMENT_DEFAULT_FAILURE_URL = '/enroll/failure/:id'
+
+# if set, the Sender header will be added, From will be the enrolling user
+OAREPO_ENROLLMENT_REAL_SENDER_EMAIL = None
 ```
