@@ -89,7 +89,7 @@ On the background, this will:
      receiving enrollment url in context variables.
   4. User receives the email and clicks on the enrollment link
   5. User must log in or register via standard invenio or 3-rd party registration
-  6. the enrollment task is called with:
+  6. An expiration is checked. If not expired nor already used, the enrollment task is called with:
      * current User of the logged-in user
      * any extra kwargs passed to the enroll call
   7. the enrollment task returns an EnrollmentResult containing flag if the enrollment
@@ -97,12 +97,14 @@ On the background, this will:
   8. The database record is enriched with timestamp, enrollment status and user instance.
   9. user is redirected via 302 to the redirection url, defaulting to success/failure url
 
-Note: once the enrollment link has been consumed, it can not be reused by a different user.
-Also, expired link can not be reused as well.
+**Note:** once the enrollment link has been consumed, it can not be reused by a different user.
+
+**Note:** expired link can not be used to enroll, it might be used if user has already enrolled
+and user will be redirected to the success url.
 
 ### Task implementation
 
-Task is a function with a signature:
+Task is a function with signature:
 
 ```python
 
@@ -112,8 +114,11 @@ from invenio_accounts.models import User, Role
 from invenio_db import db
 
 
-def assing_role_task(user: User, extra_data) -> EnrollmentResult:
-  role = Role.query.filter_by(name=extra_data['role']).one()
+def assing_role_task(user: User, role, **kwargs) -> EnrollmentResult:
+  """
+
+  """
+  role = Role.query.filter_by(name=role).one()
   user.roles.append(role)
   db.session.add(user)
   db.session.commit()
@@ -195,4 +200,10 @@ OAREPO_ENROLLMENT_EXPIRED_URL = '/enroll/expired/:id'
 
 # redirection url if the link has been already consumed
 OAREPO_ENROLLMENT_CONSUMED_URL = '/enroll/consumed/:id'
+
+# default url on success (if not specified by the task or caller)
+OAREPO_ENROLLMENT_DEFAULT_SUCCESS_URL = '/enroll/success/:id'
+
+# default url on failure (if not specified by the task or caller)
+OAREPO_ENROLLMENT_DEFAULT_FAILURE_URL = '/enroll/failure/:id'
 ```
