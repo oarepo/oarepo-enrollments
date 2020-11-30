@@ -22,9 +22,9 @@ IDEAS ONLY, DO NOT USE
 
 OArepo Enrollment library provides a unified way for admin, curator or other users
 to ask person to enroll in a "task". The task might be anything - for example,
-to assign a role to a member, to participate on editing a record, etc.
+assigning role to a member, to participate on editing a record, etc.
 
-The user being enrolled might not exist in Invenio database, if s/he does not,
+The user being enrolled might not yet exist in Invenio user database. If s/he does not,
 the enrollment is completed after the user registers.
 
 The enrollment might be "automatic" as well - that is, if the user already exists,
@@ -50,8 +50,6 @@ no intervention is required from him/her.
 ```
 
 ## Usage
-
-The library provides API for enrolling user for a task and mechanism for writing tasks.
 
 ### Enrolling user
 
