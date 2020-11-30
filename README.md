@@ -178,7 +178,6 @@ The ``mode`` parameter can be:
 #### ``EnrollmentResult``
 
 ```python
-from collections import namedtuple
 class EnrollmentResult:
   def __init__(self, status, url=None):
     self.status = status
