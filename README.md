@@ -87,13 +87,18 @@ On the background, this will:
      receiving enrollment url in context variables.
   4. User receives the email and clicks on the enrollment link
   5. User must log in or register via standard invenio or 3-rd party registration
-  6. An expiration is checked. If not expired nor already used, the enrollment task is called with:
+  6. An expiration is checked. If expired or already used, user is redirected to appropriate failure page.
+  7. If task handler returns accept_url or accept_message, user is redirected to the accept url
+     and when accepts the invitation, the timestamp accepted is stored in the db and user is redirected back here.
+  8. the enrollment task handler is called with:
      * current User of the logged-in user
      * any extra kwargs passed to the enroll call
-  7. the enrollment task returns an EnrollmentResult containing flag if the enrollment
-     has been successful and optionally a redirection url
-  8. The database record is enriched with timestamp, enrollment status and user instance.
-  9. user is redirected via 302 to the redirection url, defaulting to success/failure url
+  9. the enrollment task returns True if the enrollment has been successful or False on failure
+  10. The database record is enriched with timestamp, enrollment status and user instance.
+  11. user is redirected via 302 to the redirection success or failure url :
+     * urls passed to enroll function
+     * urls retrieved from task handler
+     * default urls from flask configuration
 
 **Note:** once the enrollment link has been consumed, it can not be reused by a different user.
 
@@ -106,21 +111,21 @@ Task is a function with signature:
 
 ```python
 
-from oarepo_enrollment import EnrollmentResult
+from oarepo_enrollment import EnrollmentTask
 
 from invenio_accounts.models import User, Role
 from invenio_db import db
 
+class AssignRoleTask(EnrollmentTask):
+    def enroll(self, user: User, role, **kwargs) -> bool:
+      """
 
-def assing_role_task(user: User, role, **kwargs) -> EnrollmentResult:
-  """
-
-  """
-  role = Role.query.filter_by(name=role).one()
-  user.roles.append(role)
-  db.session.add(user)
-  db.session.commit()
-  return EnrollmentResult.success
+      """
+      role = Role.query.filter_by(name=role).one()
+      user.roles.append(role)
+      db.session.add(user)
+      db.session.commit()
+      return True
 ```
 
 ### Task registration
@@ -132,7 +137,7 @@ setup(
   # ...
   entry_points={
     'oarepo_enrollment.tasks': [
-        'assign_role = my.module:assing_role_task',
+        'assign_role = my.module:AssignRoleTask',
     ],
   }
 )
@@ -178,14 +183,36 @@ The ``mode`` parameter can be:
 #### ``EnrollmentResult``
 
 ```python
-class EnrollmentResult:
-  def __init__(self, status, url=None):
-    self.status = status
-    self.url = url
+from oarepo_enrollment.models import Enrollment
 
-EnrollmentResult.success = EnrollmentResult(True)
-EnrollmentResult.failure = EnrollmentResult(False)
+class EnrollmentTask:
+  def __init__(self, enrollment: Enrollment):
+    self.enrollment = enrollment
+
+  def enroll(self, user, **kwargs):
+     raise NotImplementedError('Implement this')
+
+  @property
+  def success_url(self):
+     return None
+
+  @property
+  def failure_url(self):
+     return None
+
+  @property
+  def accept_message(self):
+     return None
+
+  @property
+  def accept_url(self):
+     return None
 ```
+
+#### ``Enrollment``
+
+A database model containing enrollment status.
+
 ### Configuration
 
 ```python
@@ -197,6 +224,9 @@ OAREPO_ENROLLMENT_EXPIRED_URL = '/enroll/expired/:id'
 
 # redirection url if the link has been already consumed
 OAREPO_ENROLLMENT_CONSUMED_URL = '/enroll/consumed/:id'
+
+# default accept url
+OAREPO_ENROLLMENT_DEFAULT_ACCEPT_URL = '/enroll/accept/:id'
 
 # default url on success (if not specified by the task or caller)
 OAREPO_ENROLLMENT_DEFAULT_SUCCESS_URL = '/enroll/success/:id'
