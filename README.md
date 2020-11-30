@@ -81,7 +81,7 @@ On the background, this will:
 
   1. A unique enrollment id is generated and associated with recipent email, kwargs are json-serialized
      and together with id written to the database.
-  2. If ``mode`` is not ``ENROLL_MANUALLY``: A check is made if a user with this email
+  2. If ``mode`` is ``ENROLL_SKIP_EMAIL``: A check is made if a user with this email
      address already exists. If so, calls the enrollment task (see below) and returns.
   3. An email is created and sent. The subject and body are processed as jinja templates,
      receiving enrollment url in context variables.
