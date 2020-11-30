@@ -88,8 +88,9 @@ On the background, this will:
   4. User receives the email and clicks on the enrollment link
   5. User must log in or register via standard invenio or 3-rd party registration
   6. An expiration is checked. If expired or already used, user is redirected to appropriate failure page.
-  7. If task handler returns accept_url or accept_message, user is redirected to the accept url
-     and when accepts the invitation, timestamp is stored in the db and user is redirected back here.
+  7. If task handler returns ``accept_url`` or ``accept_message``, user is redirected to the ``accept_url``
+     (or the url from configuration) and when accepts the invitation, timestamp is stored in the db
+     and user is redirected back here.
   8. the enrollment task handler is called with:
      * current User of the logged-in user
      * any extra kwargs passed to the enroll call
