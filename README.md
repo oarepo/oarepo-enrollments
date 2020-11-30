@@ -57,7 +57,7 @@ To enroll user, call
 
 ```python
 
-from oarepo_enrollment import enroll, ENROLL_MANUALLY, ENROLL_AUTOMATICALLY, ENROLL_SKIP_EMAIL
+from oarepo_enrollment import enroll
 from flask_login import current_user
 
 enroll(
