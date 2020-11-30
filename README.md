@@ -97,6 +97,9 @@ On the background, this will:
   8. The database record is enriched with timestamp, enrollment status and user instance.
   9. user is redirected via 302 to the redirection url, defaulting to success/failure url
 
+Note: once the enrollment link has been consumed, it can not be reused by a different user.
+Also, expired link can not be reused as well.
+
 ### Task implementation
 
 Task is a function with a signature:
@@ -184,8 +187,12 @@ EnrollmentResult.failure = EnrollmentResult(False)
 ### Configuration
 
 ```python
-
 # default mail link expiration is 14 days
 OAREPO_ENROLLMENT_EXPIRATION = 14
 
+# redirection url if the link has expired
+OAREPO_ENROLLMENT_EXPIRED_URL = '/enroll/expired/:id'
+
+# redirection url if the link has been already consumed
+OAREPO_ENROLLMENT_CONSUMED_URL = '/enroll/consumed/:id'
 ```
