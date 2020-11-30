@@ -58,21 +58,24 @@ To enroll user, call
 ```python
 
 from oarepo_enrollment import enroll, ENROLL_MANUALLY, ENROLL_AUTOMATICALLY, ENROLL_SKIP_EMAIL
+from flask_login import current_user
 
 enroll(
-    task='<task name>',
-    recipient='<user email>',
-    sender='<invenio user>',
-    sender_email='<defaults to email of invenio user>',
-    subject='<mail subject>',
-    body='<mail_template>',
-    language='<optional language for translation>',
-    mode=ENROLL_MANUALLY,
-    success_url='url',
-    failure_url='url',
-    expiration='<mail expiration in days>',
-    **kwargs
+    task='assign_role',
+    recipient='sample.user@test.com',
+    sender=current_user,
+    subject='You have become a curator !',
+    body="""
+Dear user,
+by clicking on the link below you will become a curator for this repository.
+
+    {{ enrollment_url }}
+
+Congratulations!
+    """,
+    role='curators'
 )
+
 
 ```
 
@@ -106,12 +109,27 @@ from invenio_accounts.models import User, Role
 from invenio_db import db
 
 
-def add_to_group_task(user: User, extra_data) -> EnrollmentResult:
+def assing_role_task(user: User, extra_data) -> EnrollmentResult:
   role = Role.query.filter_by(name=extra_data['role']).one()
   user.roles.append(role)
   db.session.add(user)
   db.session.commit()
   return EnrollmentResult.success
+```
+
+### Task registration
+
+Register task in setup.py:
+
+```python
+setup(
+  # ...
+  entry_points={
+    'oarepo_enrollment.tasks': [
+        'assign_role = my.module:assing_role_task',
+    ],
+  }
+)
 ```
 
 ### API
@@ -129,6 +147,7 @@ def enroll(
     sender_email: str,       # optional
     subject: str,            # jinja template
     body: str,               # jinja template
+    html: bool,              # set true if the body is a html document
     language: str,           # language for flask-babelex
     mode: ENROLL_XXX,        # see below
     success_url='url',       # override the success url
