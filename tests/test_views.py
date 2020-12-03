@@ -8,9 +8,9 @@ from tests.helpers import extra_entrypoints
 
 def fix_ws(resp):
     resp = resp.data.decode('utf-8').replace('\n', ' ').replace('\t', ' ')
-    resp = re.sub('>\s+', '> ', resp)
-    resp = re.sub('\s+<', ' <', resp)
-    resp = re.sub('\s+', ' ', resp)
+    resp = re.sub('>[ \t\n]+', '> ', resp)
+    resp = re.sub('[ \t\n]+<', ' <', resp)
+    resp = re.sub('[ \t\n]+', ' ', resp)
     return resp
 
 
