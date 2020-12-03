@@ -177,7 +177,7 @@ by the key and enrollment type:
 
 from oarepo_enrollment import list_enrollments
 
-for enrollment in list(external_key='test', enrollment='role'):
+for enrollment in list_enrollments(external_key='test', enrollment_type='role'):
     print(enrollment)
 ```
 
