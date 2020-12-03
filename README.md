@@ -316,7 +316,8 @@ If you use HTML views provided by this library, you can customize them as follow
      They are in ``oarepo/enrollment`` folder and are called
      ``accept.html``, ``failure.html``, ``reject.html``, ``success.html``. See the sources for passed
      parameters etc.
-   * Override templates for a single enrollment type. In your handler, set
+   * Override templates for a single enrollment type. In your handler, set the appropriate ``*_url``
+     properties
 
 ## Signals
 
