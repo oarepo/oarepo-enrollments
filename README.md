@@ -317,3 +317,67 @@ If you use HTML views provided by this library, you can customize them as follow
      ``accept.html``, ``failure.html``, ``reject.html``, ``success.html``. See the sources for passed
      parameters etc.
    * Override templates for a single enrollment type. In your handler, set
+
+## Signals
+
+```python
+import oarepo_enrollment.signals
+
+oarepo_enrollment.signals.enrollment_linked
+"""Notifies receivers that enrollment has been linked to an invenio user
+
+:param  enrollment: the linked enrollment
+"""
+
+oarepo_enrollment.signals.enrollment_created
+"""Notifies receivers that enrollment has been created.
+
+:param  enrollment: the linked enrollment
+:return True if no notification should be sent
+"""
+
+oarepo_enrollment.signals.enrollment_accepted
+"""Notifies receivers that enrollment has been accepted (when accept is required)
+
+:param  enrollment: the accepted enrollment
+"""
+
+oarepo_enrollment.signals.enrollment_rejected
+"""Notifies receivers that enrollment has been rejected (when accept is required)
+
+:param  enrollment: the rejected enrollment
+"""
+
+oarepo_enrollment.signals.enrollment_successful
+"""Notifies receivers that enrollment has been successfully carried out
+
+:param  enrollment: the successful enrollment
+"""
+
+oarepo_enrollment.signals.enrollment_failed
+"""Notifies receivers that enrollment failed.
+
+:param  enrollment: the failed enrollment
+:param  exception: failure exception
+"""
+
+oarepo_enrollment.signals.enrollment_duplicit_user
+"""Notifies receivers that the same enrollment is used by two different accounts.
+
+:param  enrollment: the failed enrollment
+:param  impostor: the second user that wants to use the enrollment
+"""
+
+oarepo_enrollment.signals.enrollment_revoked
+"""Notifies receivers that enrollment has been successfully revoked
+
+:param  enrollment: the revoked enrollment
+"""
+
+oarepo_enrollment.signals.revocation_failed
+"""Notifies receivers that revocation failed.
+
+:param  enrollment: the failed enrollment
+:param  exception: failure exception
+"""
+```
