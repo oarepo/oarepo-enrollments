@@ -44,8 +44,8 @@ no intervention is required from him/her.
 		* [``enroll``](#``enroll``)
 		* [``EnrollmentHandler``](#``EnrollmentHandler``)
 		* [``Enrollment``](#``Enrollment``)
-	* [Configuration](#Configuration)
-	* [Templates](#Templates)
+* [Configuration](#Configuration)
+* [Templates](#Templates)
 
 
 ## Installation
@@ -265,7 +265,7 @@ class EnrollmentHandler:
 
 A database model containing enrollment status.
 
-### Configuration
+## Configuration
 
 ```python
 # default mail link expiration is 14 days
@@ -306,7 +306,7 @@ OAREPO_ENROLLMENT_LOGIN_URL_NEXT_PARAM = 'next'
 OAREPO_ENROLLMENT_BASE_TEMPLATE = 'oarepo/enrollment/base.html'
 ```
 
-### Templates
+## Templates
 
 If you use HTML views provided by this library, you can customize them as follows:
 
