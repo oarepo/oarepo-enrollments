@@ -37,7 +37,7 @@ no intervention is required from him/her.
 * [Usage](#Usage)
 	* [Enrolling user](#Enrolling-user)
 	* [Handler implementation](#Handler-implementation)
-	* [Task registration](#Task-registration)
+	* [Handler registration](#Handler-registration)
 	* [Revoking user](#Revoking-user)
 	* [Listing enrollments](#Listing-enrollments)
 * [API](#API)
@@ -142,9 +142,9 @@ class AssignRole(EnrollmentHandler):
       db.session.commit()
 ```
 
-### Task registration
+### Handler registration
 
-Register task in setup.py:
+Register handler in setup.py:
 
 ```python
 setup(
