@@ -1,9 +1,6 @@
 # oarepo-enrollment
 
 
-IDEAS ONLY, DO NOT USE
-
-
 [![image][]][1]
 [![image][2]][3]
 [![image][4]][5]
