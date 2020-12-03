@@ -40,10 +40,10 @@ no intervention is required from him/her.
 	* [Task registration](#Task-registration)
 	* [Revoking user](#Revoking-user)
 	* [Listing enrollments](#Listing-enrollments)
-	* [API](#API)
-		* [``enroll``](#``enroll``)
-		* [``EnrollmentHandler``](#``EnrollmentHandler``)
-		* [``Enrollment``](#``Enrollment``)
+* [API](#API)
+    * [``enroll``](#``enroll``)
+    * [``EnrollmentHandler``](#``EnrollmentHandler``)
+    * [``Enrollment``](#``Enrollment``)
 * [Configuration](#Configuration)
 * [Templates](#Templates)
 
@@ -181,9 +181,9 @@ for enrollment in list(external_key='test', enrollment='role'):
     print(enrollment)
 ```
 
-### API
+## API
 
-#### ``enroll``
+### ``enroll``
 
 ```python
 
@@ -225,7 +225,7 @@ The **``mode``** parameter can be:
 **``urls``** if passed override the default urls returned by the handler. The default implementation
 of the handler returns urls from the configuration
 
-#### ``EnrollmentHandler``
+### ``EnrollmentHandler``
 
 ```python
 from oarepo_enrollment.models import Enrollment
@@ -261,7 +261,7 @@ class EnrollmentHandler:
     failure_url = "url to which user is redirected to when enrollment failed"
 ```
 
-#### ``Enrollment``
+### ``Enrollment``
 
 A database model containing enrollment status.
 
