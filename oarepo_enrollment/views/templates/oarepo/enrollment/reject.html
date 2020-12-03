@@ -1,0 +1,11 @@
+{% extends BASE %}
+
+{% block title %}
+  {% trans title=enrollment.handler.title %}Enrollment {{ title }} rejected!{% endtrans %}
+{% endblock %}
+{% block content %}
+  {% trans title=enrollment.handler.title %}
+    You have rejected to be enrolled in {{ title }}. Should you want to change your opinion,
+    click again on the enrollment link you have been sent and accept the enrollment.
+  {% endtrans %}
+{% endblock %}

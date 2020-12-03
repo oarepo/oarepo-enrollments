@@ -1,0 +1,11 @@
+{% extends BASE %}
+
+{% block title %}
+  {% trans %}Enrollment has been successful!{% endtrans %}
+{% endblock %}
+{% block content %}
+  {% trans title=enrollment.handler.title, redirect_url="/" %}
+    You have been successfully enrolled to {{ title }},
+    now <a href="{{ redirect_url }}">open the application</a>
+  {% endtrans %}
+{% endblock %}

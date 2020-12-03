@@ -1,0 +1,10 @@
+{% extends BASE %}
+
+{% block title %}
+  {% trans %}Enrollment failed!{% endtrans %}
+{% endblock %}
+{% block content %}
+  {% trans title=enrollment.handler.title, reason=gettext(enrollment.failure_reason) %}
+    Your enrollment in {{ title }} failed with reason "{{ reason }}".
+  {% endtrans %}
+{% endblock %}

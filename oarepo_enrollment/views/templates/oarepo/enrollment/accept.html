@@ -1,0 +1,21 @@
+{% extends BASE %}
+
+{% block title %}
+  {% trans title=enrollment.handler.title %} Enrollment {{ title }}{% endtrans %}
+{% endblock %}
+{% block content %}
+  <form method="post" action="">
+    <p>
+      {% trans grantor=enrollment.granting_user.email, title=enrollment.handler.title %}
+        User {{ grantor }} wants to enroll you in {{ title }}
+      {% endtrans %}
+    </p>
+    <p>
+      {% trans %}
+        Do you agree?
+      {% endtrans %}
+    </p>
+    <button type="submit" name="accept" value="accept">{% trans %}Yes{% endtrans %}</button>
+    <button type="submit" name="reject" value="reject">{% trans %}No{% endtrans %}</button>
+  </form>
+{% endblock %}

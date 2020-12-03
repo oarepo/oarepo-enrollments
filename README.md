@@ -60,7 +60,7 @@ To enroll user, call
 from oarepo_enrollment import enroll
 
 enroll(
-    task='assign_role',
+    enrollment='role',
     recipient='sample.user@test.com',
     subject='You have become a curator !',
     body="""
@@ -82,23 +82,23 @@ On the background, this will:
   1. A unique enrollment id is generated and associated with recipent email, kwargs are json-serialized
      and together with id written to the database.
   2. If ``mode`` is ``ENROLL_SKIP_EMAIL``: A check is made if a user with this email
-     address already exists. If so, calls the enrollment task (see below) and returns.
+     address already exists. If so, calls the enrollment handler (see below) and returns.
   3. An email is created and sent. The subject and body are processed as jinja templates,
      receiving enrollment url in context variables.
   4. User receives the email and clicks on the enrollment link
   5. User must log in or register via standard invenio or 3-rd party registration
   6. An expiration is checked. If expired or already used, user is redirected to appropriate failure page.
-  7. If task handler returns ``accept_url`` or ``accept_message``, user is redirected to the ``accept_url``
+  7. If enrollment handler returns ``accept_url`` or ``accept_message``, user is redirected to the ``accept_url``
      (or the url from configuration) and when accepts the invitation, timestamp is stored in the db
      and user is redirected back here.
-  8. the enrollment task handler is called with:
+  8. the enrollment handler is called with:
      * current User of the logged-in user
      * any extra kwargs passed to the enroll call
-  9. the enrollment task returns True if the enrollment has been successful or False on failure
+  9. the enrollment handler returns True if the enrollment has been successful or False on failure
   10. The database record is enriched with timestamp, enrollment status and user instance.
   11. user is redirected via 302 to the redirection success or failure url:
       * urls passed to enroll function
-      * urls retrieved from task handler
+      * urls retrieved from enrollment handler
       * default urls from flask configuration
 
 **Note:** once the enrollment link has been consumed, it can not be reused by a different user.
@@ -106,24 +106,28 @@ On the background, this will:
 **Note:** expired link can not be used to enroll, it might be used if user has already enrolled
 and user will be redirected to the success url.
 
-### Task implementation
+### Handler implementation
 
-Task is a function with signature:
+Enrollment handler is a function with signature:
 
 ```python
 
-from oarepo_enrollment import EnrollmentTask
+from oarepo_enrollment import EnrollmentHandler
 
 from invenio_accounts.models import User, Role
 from invenio_db import db
 
-class AssignRoleTask(EnrollmentTask):
-    def enroll(self, user: User, role, **kwargs) -> bool:
-      """
-
-      """
+class AssignRole(EnrollmentHandler):
+    def enroll(self, user: User, role=None, **kwargs) -> bool:
       role = Role.query.filter_by(name=role).one()
       user.roles.append(role)
+      db.session.add(user)
+      db.session.commit()
+      return True
+
+    def revoke(self, user: User, role=None, **kwargs) -> bool:
+      role = Role.query.filter_by(name=role).one()
+      user.roles.remove(role)
       db.session.add(user)
       db.session.commit()
       return True
@@ -137,12 +141,26 @@ Register task in setup.py:
 setup(
   # ...
   entry_points={
-    'oarepo_enrollment.tasks': [
-        'assign_role = my.module:AssignRoleTask',
+    'oarepo_enrollment.enrollments': [
+        'role = my.module:AssignRole',
     ],
   }
 )
 ```
+
+### Revoking user
+
+```python
+
+from oarepo_enrollment import revoke
+
+revoke(
+    task='assign_role',
+    enrolled_user=User.query.filter_by(...).one(),
+    role='curators'
+)
+```
+
 
 ### API
 
@@ -181,12 +199,12 @@ The ``mode`` parameter can be:
   * ``user`` - if the user has already registered, an instance of ``invenio_accounts.models.User``
   * ``language`` - language parameter
 
-#### ``EnrollmentTask``
+#### ``EnrollmentHandler``
 
 ```python
 from oarepo_enrollment.models import Enrollment
 
-class EnrollmentTask:
+class EnrollmentHandler:
   def __init__(self, enrollment: Enrollment):
     self.enrollment = enrollment
 

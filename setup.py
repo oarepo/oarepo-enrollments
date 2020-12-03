@@ -68,10 +68,16 @@ setup(
             'oarepo:enrollment = oarepo_enrollment.cli:enrollment',
         ],
         'invenio_base.apps': [
-            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollment',
+            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollmentExt',
         ],
         'invenio_base.api_apps': [
-            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollment',
+            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollmentExt',
+        ],
+        'oarepo_enrollment.enrollments': [
+            'role = oarepo_enrollment.builtin_handlers:AssignRole',
+        ],
+        'invenio_base.blueprints': [
+            'oarepo_enrollment = oarepo_enrollment.views.ui:create_blueprint_from_app',
         ],
     },
     classifiers=[
