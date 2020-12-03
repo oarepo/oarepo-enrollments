@@ -1,5 +1,6 @@
 # oarepo-enrollment
 
+
 IDEAS ONLY, DO NOT USE
 
 
@@ -35,12 +36,16 @@ no intervention is required from him/her.
 * [Installation](#Installation)
 * [Usage](#Usage)
 	* [Enrolling user](#Enrolling-user)
-	* [Task implementation](#Task-implementation)
+	* [Handler implementation](#Handler-implementation)
+	* [Task registration](#Task-registration)
+	* [Revoking user](#Revoking-user)
+	* [Listing enrollments](#Listing-enrollments)
 	* [API](#API)
 		* [``enroll``](#``enroll``)
-		* [``EnrollmentResult``](#``EnrollmentResult``)
+		* [``EnrollmentHandler``](#``EnrollmentHandler``)
+		* [``Enrollment``](#``Enrollment``)
 	* [Configuration](#Configuration)
-
+	* [Templates](#Templates)
 
 
 ## Installation
