@@ -1,7 +1,9 @@
 import enum
+from typing import Union
 from urllib.parse import urljoin
 
 from flask import render_template_string, url_for, current_app
+from flask_login import current_user
 from invenio_accounts.models import User
 
 from oarepo_enrollment.models import Enrollment
@@ -93,7 +95,7 @@ class EnrollmentMethod(enum.Enum):
 
 
 def enroll(
-    enrollment: str,
+    enrollment_type: str,
     recipient: str,
     sender: User,
     sender_email: str = None,
@@ -109,10 +111,10 @@ def enroll(
     commit=True,
     external_key: str = None,
     **kwargs
-) -> bool:
-    if enrollment not in current_enrollment.tasks:
+) -> Enrollment:
+    if enrollment_type not in current_enrollment.tasks:
         raise AttributeError(
-            f'Unknown enrollment task {enrollment}. Registered tasks: {list(current_enrollment.tasks.keys())}')
+            f'Unknown enrollment {enrollment_type}. Registered enrollment types: {list(current_enrollment.tasks.keys())}')
     if not recipient:
         raise AttributeError('Enrollment recipient must not be empty')
     if not sender:
@@ -120,7 +122,7 @@ def enroll(
     if not subject and body or not body and subject:
         raise AttributeError('Subject and body must not be empty (or both empty in some circumstances, see the readme)')
 
-    db_enrollment = Enrollment.create(enrollment, external_key, recipient, sender, sender_email,
+    db_enrollment = Enrollment.create(enrollment_type, external_key, recipient, sender, sender_email,
                                       accept_url,
                                       reject_url,
                                       success_url,
@@ -144,36 +146,9 @@ def enroll(
                     raise
 
         if not subject or not body:
-            raise AttributeError('Both subject and body must be passed')
+            return db_enrollment
 
-        template_params = dict(
-            enrollment_url=url_for('enrollment:enroll', _external=True, key=db_enrollment.key),
-            user=db_enrollment.enrolled_user,
-            enrollment=db_enrollment,
-            language=language, **kwargs
-        )
-
-        subject = render_template_string(subject, **template_params)
-        body = render_template_string(body, **template_params)
-
-        mail_headers = {}
-        if current_app.config['OAREPO_ENROLLMENT_REAL_SENDER_EMAIL']:
-            mail_headers['Sender'] = current_app.config['OAREPO_ENROLLMENT_REAL_SENDER_EMAIL']
-
-        msg = Message(
-            subject,
-            sender=db_enrollment.granting_email,
-            reply_to=db_enrollment.granting_email,
-            recipients=[db_enrollment.enrolled_email],
-            charset='utf-8',
-            extra_headers=mail_headers
-        )
-        if html:
-            msg.html = body
-        else:
-            msg.body = body
-
-        current_app.extensions['mail'].send(msg)
+        _send_enrollment_main(subject, body, db_enrollment, language, html, kwargs)
     except:
         db_enrollment.revoke()
         raise
@@ -181,24 +156,51 @@ def enroll(
         if commit:
             db.session.commit()
 
-    return True
+    return db_enrollment
+
+
+def _send_enrollment_main(subject, body, db_enrollment, language, html, kwargs):
+    template_params = dict(
+        enrollment_url=url_for('enrollment:enroll', _external=True, key=db_enrollment.key),
+        user=db_enrollment.enrolled_user,
+        enrollment=db_enrollment,
+        language=language, **kwargs
+    )
+    subject = render_template_string(subject, **template_params)
+    body = render_template_string(body, **template_params)
+    mail_headers = {}
+    if current_app.config['OAREPO_ENROLLMENT_REAL_SENDER_EMAIL']:
+        mail_headers['Sender'] = current_app.config['OAREPO_ENROLLMENT_REAL_SENDER_EMAIL']
+    msg = Message(
+        subject,
+        sender=db_enrollment.granting_email,
+        reply_to=db_enrollment.granting_email,
+        recipients=[db_enrollment.enrolled_email],
+        charset='utf-8',
+        extra_headers=mail_headers
+    )
+    if html:
+        msg.html = body
+    else:
+        msg.body = body
+    current_app.extensions['mail'].send(msg)
 
 
 def revoke(
-    enrollment: str,
-    user: User,
-    revoker: User,
-    external_key: str,
+    enrollment: Union[str, int, Enrollment],
+    revoker: User=None,
     commit=True
 ):
     try:
-        enrollment = Enrollment.query.filter_by(enrollment_type=enrollment, external_key=external_key,
-                                                enrolled_user=user).one()
-        enrollment.revoke(revoker)
+        if isinstance(enrollment, str):
+            enrollment = Enrollment.query.filter_by(external_key=enrollment).one()
+        elif isinstance(enrollment, int):
+            enrollment = Enrollment.query.get(enrollment)
+        enrollment.revoke(revoker or current_user)
     finally:
         if commit:
             db.session.commit()
 
 
-def list(external_key, states=None):
-    return Enrollment.list(external_key, states)
+def list_enrollments(external_key=None, enrollment_type=None, states=None):
+    return Enrollment.list(external_key, enrollment_type, states)

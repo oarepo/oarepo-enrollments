@@ -102,6 +102,7 @@ class Enrollment(db.Model):
         e.success_url = success_url
         e.failure_url = failure_url
         e.extra_data = extra_data
+        e.external_key = external_key
         e.start_timestamp = datetime.datetime.now()
         e.expiration_timestamp = e.start_timestamp + datetime.timedelta(days=expiration_interval)
         if enrolled_user:
@@ -181,8 +182,41 @@ class Enrollment(db.Model):
         enrollment_rejected.send(self, enrollment=self)
 
     @classmethod
-    def list(cls, external_key, state=None):
-        ret = cls.query.filter_by(cls.external_key == external_key)
+    def list(cls, external_key=None, enrollment_type=None, state=None):
+        ret = None
+        if external_key:
+            if ret is None:
+                ret = cls.query
+            ret = ret.filter(cls.external_key == external_key)
+        if enrollment_type:
+            if ret is None:
+                ret = cls.query
+            ret = ret.filter(cls.enrollment_type == enrollment_type)
         if state:
-            ret = ret.filter_by(state in cls.state)
+            if ret is None:
+                ret = cls.query
+            ret = ret.filter(cls.state.in_(state))
+        if ret is None:
+            ret = cls.query
         return ret
+
+    def __str__(self):
+        ret = ''
+        if self.state == Enrollment.PENDING:
+            ret = 'pending'
+        elif self.state == Enrollment.LINKED:
+            ret = f'linked to {self.enrolled_user.email}'
+        elif self.state == Enrollment.ACCEPTED:
+            ret = f'accepted by {self.enrolled_user.email}'
+        elif self.state == Enrollment.REJECTED:
+            ret = f'rejected by {self.enrolled_user.email}'
+        elif self.state == Enrollment.SUCCESS:
+            ret = f'successfully assigned to {self.enrolled_user.email}'
+        elif self.state == Enrollment.FAILURE:
+            ret = f'failed, enrolled user {self.enrolled_user.email if self.enrolled_user else self.enrolled_email}, ' \
+                  f'error {self.failure_reason}'
+        elif self.state == Enrollment.REVOKED:
+            ret = f'revoked from {self.enrolled_user.email}'
+        if self.external_key:
+            ret = f'external key={self.external_key}, {ret}'
+        return f'Enrollment[key={self.key}, {ret}'

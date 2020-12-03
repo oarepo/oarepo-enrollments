@@ -116,7 +116,7 @@ def pending_accept_enrollment(db, granting_user):
 @pytest.fixture
 def linked_enrollment(db, granting_user, enrolled_user):
     enrollment = Enrollment.create(
-        'role', None, enrolled_user.email, granting_user, extra_data=dict(role='test'))
+        'role', 'blah', enrolled_user.email, granting_user, extra_data=dict(role='test'))
     db.session.commit()
     return enrollment
 

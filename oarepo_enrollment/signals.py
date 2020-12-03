@@ -8,6 +8,13 @@ enrollment_linked = _signals.signal('enrollment_linked')
 :param  enrollment: the linked enrollment
 """
 
+enrollment_created = _signals.signal('enrollment_created')
+"""Notifies receivers that enrollment has been created.
+
+:param  enrollment: the linked enrollment
+:return True if no notification should be sent
+"""
+
 enrollment_accepted = _signals.signal('enrollment_accepted')
 """Notifies receivers that enrollment has been accepted (when accept is required)
 

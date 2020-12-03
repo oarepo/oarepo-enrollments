@@ -28,6 +28,9 @@ OAREPO_ENROLLMENT_REAL_SENDER_EMAIL = None
 # login url to redirect to when user is not logged in. If not set, SECURITY_LOGIN_URL is used
 OAREPO_ENROLLMENT_LOGIN_URL = None
 
+# parameter name for login page that means "redirect after login is successful
 OAREPO_ENROLLMENT_LOGIN_URL_NEXT_PARAM = 'next'
 
+# name of the base template, from which enrollment templates inherit. It must supply
+# title and content blocks.
 OAREPO_ENROLLMENT_BASE_TEMPLATE = 'oarepo/enrollment/base.html'
