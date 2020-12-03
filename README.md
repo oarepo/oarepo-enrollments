@@ -46,7 +46,7 @@ no intervention is required from him/her.
     * [``Enrollment``](#``Enrollment``)
 * [Configuration](#Configuration)
 * [Templates](#Templates)
-
+* [Signals](#Signals)
 
 ## Installation
 
