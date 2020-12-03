@@ -97,7 +97,8 @@ def enroll_view(key):
     enrollment = Enrollment.query.filter_by(key=key).one()
     try:
         # already registered to someone and someone else reuses the registration url
-        if enrollment.enrolled_user and enrollment.enrolled_user != current_user:
+        if not enrollment.check_user_allowed(current_user):
+            db.session.commit()
             return redirect(enrollment.handler.failure_url)
 
         # user clicked on the link in email more than once

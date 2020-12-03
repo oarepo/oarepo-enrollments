@@ -220,3 +220,26 @@ def test_accept_rejected(app, db, pending_accept_enrollment, enrolled_user, test
 
     db.session.refresh(enrolled_user)
     assert test_role in enrolled_user.roles
+
+
+@patch('pkg_resources.iter_entry_points', extra_entrypoints)
+def test_already_taken_enrollment(app, db, linked_enrollment, impostor_user, test_role, test_blueprint):
+    with app.test_client() as client:
+        resp = client.get(url_for('_tests.test_login', user_id=impostor_user.id, _external=True))
+        assert resp.status_code == 200
+
+        url = url_for('enrollment.enroll', key=linked_enrollment.key, _external=True)
+        assert url == 'https://localhost' + app.config['OAREPO_ENROLLMENT_URL'].replace('<key>', linked_enrollment.key)
+
+        resp = client.get(url)
+        assert resp.status_code == 302
+        location = resp.headers['Location']
+        assert location == 'https://localhost/enroll/failure/' + linked_enrollment.key
+
+        resp = client.get(location)
+        assert resp.status_code == 200
+        assert 'Enrollment failed!' in fix_ws(resp)
+        assert 'User impostor@example.com wants to enroll in an already assigned enrollment role "test"' in fix_ws(resp)
+
+    db.session.refresh(impostor_user)
+    assert test_role not in impostor_user.roles

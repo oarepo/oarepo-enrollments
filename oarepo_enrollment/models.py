@@ -12,6 +12,8 @@ from sqlalchemy_utils import ChoiceType
 from werkzeug.utils import cached_property
 
 from oarepo_enrollment.proxies import current_enrollment
+from oarepo_enrollment.signals import enrollment_linked, enrollment_failed, enrollment_successful, enrollment_revoked, \
+    revocation_failed, enrollment_accepted, enrollment_rejected, enrollment_duplicit_user
 
 
 class Enrollment(db.Model):
@@ -116,11 +118,21 @@ class Enrollment(db.Model):
     def expired(self):
         return datetime.datetime.now() > self.expiration_timestamp
 
+    def check_user_allowed(self, user):
+        if self.enrolled_user and self.enrolled_user != user:
+            self.failure_reason = f'User {user.email} wants to enroll in ' \
+                                  f'an already assigned enrollment {self.handler.title}'
+            db.session.add(self)
+            enrollment_duplicit_user.send(self, enrollment=self, impostor=user)
+            return False
+        return True
+
     def attach_user(self, user):
         assert self.state == Enrollment.PENDING
         self.state = Enrollment.LINKED
         self.user_attached_timestamp = datetime.datetime.now()
         self.enrolled_user = user
+        enrollment_linked.send(self, enrollment=self)
         db.session.add(self)
 
     def enroll(self, user):
@@ -128,13 +140,16 @@ class Enrollment(db.Model):
             self.handler.enroll(user, **self.extra_data)
             self.state = Enrollment.SUCCESS
             self.enrolled_user = user
+            self.finalization_timestamp = datetime.datetime.now()
+            enrollment_successful.send(self, enrollment=self)
+            db.session.add(self)
         except Exception as e:
             self.state = Enrollment.FAILURE
             self.failure_reason = getattr(e, 'message', str(e))
-            raise
-        finally:
+            enrollment_failed.send(self, enrollment=self, exception=e)
             self.finalization_timestamp = datetime.datetime.now()
             db.session.add(self)
+            raise
 
     def revoke(self, revoker):
         if not self.enrolled_user:
@@ -143,22 +158,27 @@ class Enrollment(db.Model):
         try:
             self.state = Enrollment.REVOKED
             self.handler.revoke(self.enrolled_user, **self.extra_data)
-        except Exception as e:
-            self.failure_reason = getattr(e, 'message', str(e))
-            raise
-        finally:
             self.revocation_timestamp = datetime.datetime.now()
             db.session.add(self)
+            enrollment_revoked.send(self, enrollment=self)
+        except Exception as e:
+            self.failure_reason = getattr(e, 'message', str(e))
+            self.revocation_timestamp = datetime.datetime.now()
+            db.session.add(self)
+            revocation_failed.send(self, enrollment=self, exception=e)
+            raise
 
     def accept(self):
         self.state = Enrollment.ACCEPTED
         self.accepted_timestamp = datetime.datetime.now()
         db.session.add(self)
+        enrollment_accepted.send(self, enrollment=self)
 
     def reject(self):
         self.state = Enrollment.REJECTED
         self.rejected_timestamp = datetime.datetime.now()
         db.session.add(self)
+        enrollment_rejected.send(self, enrollment=self)
 
     @classmethod
     def list(cls, external_key, state=None):
