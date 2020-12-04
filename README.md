@@ -1,8 +1,5 @@
 # oarepo-enrollment
 
-
-
-
 [![image][]][1]
 [![image][2]][3]
 [![image][4]][5]
@@ -44,10 +41,10 @@ no intervention is required from him/her.
 	* [``EnrollmentHandler``](#``EnrollmentHandler``)
 	* [``Enrollment``](#``Enrollment``)
 * [REST API](#REST-API)
-    * [Enrolling user](#Enrolling-user)
-    * [List enrollments](#List-enrollments)
-    * [Getting enrollment](#Getting-enrollment)
-    * [Revoking enrollment](#Revoking-enrollment)
+	* [Enrolling user](#Enrolling-user)
+	* [List enrollments](#List-enrollments)
+	* [Getting enrollment](#Getting-enrollment)
+	* [Revoking enrollment](#Revoking-enrollment)
 	* [Security](#Security)
 		* [``OAREPO_ENROLLMENT_LIST_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_LIST_PERMISSION_FACTORY``)
 		* [``OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER``](#``OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER``)
