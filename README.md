@@ -41,7 +41,7 @@ no intervention is required from him/her.
 	* [``EnrollmentHandler``](#``EnrollmentHandler``)
 	* [``Enrollment``](#``Enrollment``)
 * [REST API](#REST-API)
-	* [Enrolling user](#Enrolling-user)
+	* [Enrolling user via POST](#Enrolling-user-via-POST)
 	* [List enrollments](#List-enrollments)
 	* [Getting enrollment](#Getting-enrollment)
 	* [Revoking enrollment](#Revoking-enrollment)
