@@ -1,6 +1,8 @@
 # oarepo-enrollment
 
 
+
+
 [![image][]][1]
 [![image][2]][3]
 [![image][4]][5]
@@ -38,9 +40,20 @@ no intervention is required from him/her.
 	* [Revoking user](#Revoking-user)
 	* [Listing enrollments](#Listing-enrollments)
 * [API](#API)
-    * [``enroll``](#``enroll``)
-    * [``EnrollmentHandler``](#``EnrollmentHandler``)
-    * [``Enrollment``](#``Enrollment``)
+	* [``enroll``](#``enroll``)
+	* [``EnrollmentHandler``](#``EnrollmentHandler``)
+	* [``Enrollment``](#``Enrollment``)
+* [REST API](#REST-API)
+    * [Enrolling user](#Enrolling-user)
+    * [List enrollments](#List-enrollments)
+    * [Getting enrollment](#Getting-enrollment)
+    * [Revoking enrollment](#Revoking-enrollment)
+	* [Security](#Security)
+		* [``OAREPO_ENROLLMENT_LIST_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_LIST_PERMISSION_FACTORY``)
+		* [``OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER``](#``OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER``)
+		* [``OAREPO_ENROLLMENT_RETRIEVE_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_RETRIEVE_PERMISSION_FACTORY``)
+		* [``OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY``)
+		* [``OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY``)
 * [Configuration](#Configuration)
 * [Templates](#Templates)
 * [Signals](#Signals)
@@ -75,7 +88,7 @@ Congratulations!
     """,
 
     # extra params need by the enrollment handler, in this case the role to assign the user to
-    role='curators'
+    extra_data=dict(role='curators')
 )
 ```
 
@@ -242,6 +255,12 @@ class EnrollmentHandler:
 
     title = "human readable title, implicitly self.__doc__"
 
+    email_template = {
+        'subject': None,
+        'body': None,
+        'html': None
+    }
+
     # templates, might be overriden to have per-handler specific template
 
     success_template = 'oarepo/enrollment/success.html'
@@ -261,6 +280,194 @@ class EnrollmentHandler:
 ### ``Enrollment``
 
 A database model containing enrollment status.
+
+## REST API
+
+### Enrolling user
+
+```
+POST /api/enroll/
+```
+```json5
+{
+    enrollment_type: "role", // enrollment type, role is a built in enrollment type
+    recipient: "someone@example.com",
+    email_template: "role-enrollment-email",
+    language: "language for email translations",
+    mode: "manual | automatic | skip_email",
+    external_key: "caller key - any - for later identification",
+    // any args that will get passed to the handler
+    role: 'test'
+}
+```
+Returns:
+
+```json5
+{
+    'id': 1,
+    'enrollment_type': 'role',
+    'enrolled_email': 'someone@example.com',
+    'enrolled_user': null,
+    'granting_user': {
+        'email': 'granting@example.com'   // always the current user
+    },
+    'state': 'Pending',
+    'external_key': 'caller key - any - for later identification',
+    'extra_data': {
+        'role': 'test'
+    },
+    'start_timestamp': '2020-12-04T08:48:12.873987',
+    'expiration_timestamp': '2020-12-18T08:48:12.873987',
+    'accepted_timestamp': null,
+    'failure_reason': null,
+    'finalization_timestamp': null,
+    'rejected_timestamp': null,
+    'revocation_timestamp': null,
+    'revoker': null,
+    'user_attached_timestamp': null
+}
+```
+
+An email will be sent to the user with the content (given by the template, see ``OAREPO_ENROLLMENT_MAIL_TEMPLATES``
+in configuration):
+
+```make
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: New role assigned to you
+From: granting@example.com
+To: someone@example.com
+Date: Fri, 04 Dec 2020 10:11:08 +0100
+Message-ID: <160707306860.2310753.11343254980107038800@krokd.local>
+Reply-To: granting@example.com
+
+miroslav.simek@vscht.cz wants to assign you a role "test" in UCT repository.
+To accept or reject the role, please click on
+
+https://localhost/enroll/j2eh-ctr0-q2d6-4drb-y7kc-mapt-axfd-3053
+
+Thank you for your cooperation,
+
+repository@UCT
+```
+
+**Note:** Key or enrollment url (sent via email) is not returned for security reasons. If you need to pass it
+to javascript, make your own enrollment API. See [oarepo_enrollment/views/api.py](oarepo_enrollment/views/api.py)
+for details.
+
+### List enrollments
+
+```
+GET /api/enroll/?enrollment_type=<abc>&external_key=<abc>&state=[pending,linked,accepted,rejected,success,failure,revoked]&page=&size=10
+```
+Returns:
+```json5
+{
+    "pagination": {
+        "currentPage": "/api/enroll/?size=20&page=1",
+        "hasNext": false,
+        "hasPrev": false,
+        "pages": 1,
+        "size": 20,
+        "totalElements": 1
+    },
+    "data": [
+        {
+            "id": 1,
+            // as in get below
+        }
+    ]
+}
+```
+
+**Note:** Key (sent via email) is not returned for security reasons.
+
+### Getting enrollment
+
+```
+GET /api/enroll/<id>
+```
+Returns:
+```json5
+{
+    "id": 1,
+    "enrollment_type": "role",
+    "external_key": null,
+    "enrolled_email": "someone@example.com",
+    "enrolled_user": null,
+    "granting_user": {
+        "email": "granting@example.com"
+    },
+    "revoker": null,
+    "extra_data": {
+        "role": "test"
+    },
+    "state": "Pending",
+    "start_timestamp": "Thu, 03 Dec 2020 21:26:40 -0000",
+    "expiration_timestamp": "Thu, 17 Dec 2020 21:26:40 -0000",
+    "user_attached_timestamp": null,
+    "accepted_timestamp": null,
+    "rejected_timestamp": null,
+    "finalization_timestamp": null,
+    "revocation_timestamp": null,
+    "failure_reason": null
+}
+```
+
+**Note:** Key (sent via email) is not returned for security reasons.
+
+### Revoking enrollment
+
+```
+DELETE /api/enroll/<id>
+```
+Returns:
+```json5
+{
+    'id': 1,
+    'state': 'Revoked',
+    'revocation_timestamp': '2020-12-04T08:48:12.873987',
+    'revoker': {'email': 'revoker@example.com'},
+    // ... rest of data
+}
+```
+
+
+### Security
+
+The following configuration options define who has access to enrollments:
+
+#### ``OAREPO_ENROLLMENT_LIST_PERMISSION_FACTORY``
+
+Factory (or import string) returning Permission (or an object with ``can`` method) that limits access to listing.
+For extensibility reasons the factory function must accept ``**kwargs``
+
+#### ``OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER``
+
+A function (or import string) that takes ``Enrollment.query`` as argument and returns filtered
+query set. The function might, for example, limit the enrollments only to those created
+by the ``current_user``.
+
+The default implementation returns the input query without modification
+
+#### ``OAREPO_ENROLLMENT_RETRIEVE_PERMISSION_FACTORY``
+
+Factory (or import string) that takes ``enrollment: Enrollment`` instance and returns Permission.
+For extensibility reasons the factory function must accept ``**kwargs``
+
+#### ``OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY``
+
+Factory (or import string) that returns Permission representing if user can create an enrollment.
+The factory gets enrollment data passed in request as ``enrollment`` named parameter.
+For extensibility reasons the factory function must accept ``**kwargs``
+
+#### ``OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY``
+
+Factory (or import string) that returns Permission representing if user can revoke an enrollment.
+The factory gets enrollment instance as ``enrollment: Enrollment`` named parameter.
+For extensibility reasons the factory function must accept ``**kwargs``
+
 
 ## Configuration
 
@@ -301,6 +508,15 @@ OAREPO_ENROLLMENT_LOGIN_URL_NEXT_PARAM = 'next'
 # name of the base template, from which enrollment templates inherit. It must supply
 # title and content blocks.
 OAREPO_ENROLLMENT_BASE_TEMPLATE = 'oarepo/enrollment/base.html'
+
+# pre-configured mail templates
+OAREPO_ENROLLMENT_MAIL_TEMPLATES = {
+    'test-template': {
+        'subject': 'You are being enrolled!',
+        'body': 'Click {{ enrollment_url }} to participate.',
+        'html': False
+    }
+}
 ```
 
 ## Templates

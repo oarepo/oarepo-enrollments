@@ -18,7 +18,7 @@ from oarepo_enrollment.signals import enrollment_linked, enrollment_failed, enro
 
 class Enrollment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    enrollment_type = db.Column(db.String(32), nullable=False, unique=True)
+    enrollment_type = db.Column(db.String(32), nullable=False)
 
     key = db.Column(db.String(100), nullable=False, unique=True)
     external_key = db.Column(db.String(100))
@@ -56,6 +56,7 @@ class Enrollment(db.Model):
         (FAILURE, 'Failed'),
         (REVOKED, 'Revoked'),
     ]
+    ENROLLMENT_STATUS_CHOICES_REVERSE = {v: k for k, v in ENROLLMENT_STATUS_CHOICES}
     state = db.Column(ChoiceType(ENROLLMENT_STATUS_CHOICES), default=PENDING, nullable=False)
 
     start_timestamp = db.Column(db.DateTime(), nullable=False)
@@ -153,12 +154,13 @@ class Enrollment(db.Model):
             raise
 
     def revoke(self, revoker):
-        if not self.enrolled_user:
-            return
+        if revoker and revoker.is_anonymous:
+            revoker = None
         self.revoker = revoker
         try:
             self.state = Enrollment.REVOKED
-            self.handler.revoke(self.enrolled_user, **self.extra_data)
+            if self.enrolled_user:
+                self.handler.revoke(self.enrolled_user, **self.extra_data)
             self.revocation_timestamp = datetime.datetime.now()
             db.session.add(self)
             enrollment_revoked.send(self, enrollment=self)

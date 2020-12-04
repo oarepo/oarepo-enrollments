@@ -181,7 +181,6 @@ def test_accept_rejected(app, db, pending_accept_enrollment, enrolled_user, test
             resp)
 
         resp = client.post(location, data={"reject": "reject"})
-        print(resp.data)
         assert resp.status_code == 302
         location = resp.headers['Location']
         assert location == 'https://localhost/enroll/reject/' + pending_accept_enrollment.key

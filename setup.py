@@ -17,6 +17,7 @@ OAREPO_VERSION = os.environ.get('OAREPO_VERSION', '3.3')
 
 install_requires = [
     'wrapt>=1.11.2',
+    'flask-rest-paginate'
 ]
 
 tests_require = [
@@ -78,6 +79,9 @@ setup(
         ],
         'invenio_base.blueprints': [
             'oarepo_enrollment = oarepo_enrollment.views.ui:create_blueprint_from_app',
+        ],
+        'invenio_base.api_blueprints': [
+            'oarepo_enrollment = oarepo_enrollment.views.api:create_blueprint_from_app',
         ],
     },
     classifiers=[

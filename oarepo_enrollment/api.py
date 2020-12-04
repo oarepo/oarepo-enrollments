@@ -2,7 +2,7 @@ import enum
 from typing import Union
 from urllib.parse import urljoin
 
-from flask import render_template_string, url_for, current_app
+from flask import render_template_string, url_for, current_app, request
 from flask_login import current_user
 from invenio_accounts.models import User
 
@@ -31,6 +31,14 @@ class EnrollmentHandler:
     @property
     def title(self):
         return (self.__doc__ or '').strip() or self.enrollment.enrollment_type
+
+    @property
+    def email_template(self):
+        return {
+            'subject': None,
+            'body': None,
+            'html': None
+        }
 
     @property
     def enrollment_url(self):
@@ -101,7 +109,8 @@ def enroll(
     sender_email: str = None,
     subject: str = None,
     body: str = None,
-    html: bool = False,
+    email_template=None,
+    html: bool = None,
     language: str = None,
     mode: EnrollmentMethod = EnrollmentMethod.AUTOMATIC,
     accept_url: str = None,
@@ -110,23 +119,45 @@ def enroll(
     failure_url: str = None,
     commit=True,
     external_key: str = None,
-    **kwargs
+    expiration_interval=None,
+    extra_data=None
 ) -> Enrollment:
-    if enrollment_type not in current_enrollment.tasks:
+    if enrollment_type not in current_enrollment.handlers:
         raise AttributeError(
-            f'Unknown enrollment {enrollment_type}. Registered enrollment types: {list(current_enrollment.tasks.keys())}')
+            f'Unknown enrollment {enrollment_type}. Registered enrollment types: {list(current_enrollment.handlers.keys())}')
     if not recipient:
         raise AttributeError('Enrollment recipient must not be empty')
     if not sender:
         raise AttributeError('Enrollment sender must not be empty')
+
+    db_enrollment = Enrollment.create(
+        enrollment_type=enrollment_type,
+        external_key=external_key,
+        enrolled_email=recipient,
+        granting_user=sender,
+        granting_email=sender_email,
+        accept_url=accept_url,
+        reject_url=reject_url,
+        success_url=success_url,
+        failure_url=failure_url,
+        expiration_interval=expiration_interval,
+        extra_data=extra_data or {})
+
+    handler = db_enrollment.handler
+    tmpl = handler.email_template
+    if tmpl:
+        subject = subject or tmpl.get('subject')
+        body = body or tmpl.get('body')
+        html = html if html is not None else tmpl.get('html')
+
+    if email_template:
+        tmpl = current_app.config['OAREPO_ENROLLMENT_MAIL_TEMPLATES'][email_template]
+        subject = subject or tmpl.get('subject')
+        body = body or tmpl.get('body')
+        html = html if html is not None else tmpl.get('html')
+
     if not subject and body or not body and subject:
         raise AttributeError('Subject and body must not be empty (or both empty in some circumstances, see the readme)')
-
-    db_enrollment = Enrollment.create(enrollment_type, external_key, recipient, sender, sender_email,
-                                      accept_url,
-                                      reject_url,
-                                      success_url,
-                                      failure_url, kwargs)
     try:
         if db_enrollment.state == Enrollment.LINKED:
             if mode == EnrollmentMethod.SKIP_EMAIL:
@@ -148,9 +179,9 @@ def enroll(
         if not subject or not body:
             return db_enrollment
 
-        _send_enrollment_main(subject, body, db_enrollment, language, html, kwargs)
+        _send_enrollment_mail(subject, body, db_enrollment, language, html, extra_data or {})
     except:
-        db_enrollment.revoke()
+        db_enrollment.revoke(current_user)
         raise
     finally:
         if commit:
@@ -159,9 +190,14 @@ def enroll(
     return db_enrollment
 
 
-def _send_enrollment_main(subject, body, db_enrollment, language, html, kwargs):
+def _send_enrollment_mail(subject, body, db_enrollment, language, html, kwargs):
+    local_enrollment_url = current_app.config['OAREPO_ENROLLMENT_URL'].replace('<key>', db_enrollment.key)
+    try:
+        enrollment_url = urljoin(request.url, local_enrollment_url)
+    except:
+        enrollment_url = f'{current_app.config["PREFERRED_URL_SCHEME"]}://{current_app.config["SERVER_NAME"]}{local_enrollment_url}'
     template_params = dict(
-        enrollment_url=url_for('enrollment:enroll', _external=True, key=db_enrollment.key),
+        enrollment_url=enrollment_url,
         user=db_enrollment.enrolled_user,
         enrollment=db_enrollment,
         language=language, **kwargs
@@ -188,7 +224,7 @@ def _send_enrollment_main(subject, body, db_enrollment, language, html, kwargs):
 
 def revoke(
     enrollment: Union[str, int, Enrollment],
-    revoker: User=None,
+    revoker: User = None,
     commit=True
 ):
     try:

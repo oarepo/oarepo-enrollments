@@ -1,4 +1,5 @@
 import pkg_resources
+from invenio_base.utils import obj_or_import_string
 from werkzeug.utils import cached_property
 
 from . import config
@@ -14,6 +15,12 @@ class OARepoEnrollmentState:
         for entry_point in pkg_resources.iter_entry_points('oarepo_enrollment.enrollments'):
             t[entry_point.name] = entry_point.load()
         return t
+
+    @cached_property
+    def list_permission_filter(self):
+        permission_filter = self.app.config['OAREPO_ENROLLMENT_LIST_PERMISSION_FILTER']
+        permission_filter = obj_or_import_string(permission_filter)
+        return permission_filter
 
 
 class OARepoEnrollmentExt:

@@ -29,5 +29,14 @@ def extra_entrypoints(app, group=None, name=None):
     names = data.keys() if name is None else [name]
     for key in names:
         for entry_point in data[key]:
-            print(entry_point)
             yield entry_point
+
+
+def dedate(x):
+    if isinstance(x, list):
+        return [dedate(xx) for xx in x]
+    if isinstance(x, dict):
+        return {
+            k: (v if 'timestamp' not in k or not v else '--timestamp--') for k, v in x.items()
+        }
+    return x

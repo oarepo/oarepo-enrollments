@@ -17,6 +17,11 @@ def create_app():
     return factory_app
 
 
+@pytest.fixture()
+def api(app):
+    yield app.wsgi_app.mounts['/api']
+
+
 @pytest.fixture(scope="module")
 def app_config(app_config):
     """Flask application fixture."""
@@ -28,7 +33,15 @@ def app_config(app_config):
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI',
             'sqlite:///:memory:'),
-        SERVER_NAME='localhost'
+        SERVER_NAME='localhost',
+        MAIL_SUPPRESS_SEND=True,
+        OAREPO_ENROLLMENT_MAIL_TEMPLATES={
+            'test-template': {
+                'subject': 'subject',
+                'body': 'body {{ enrollment_url }}',
+                'html': False
+            }
+        }
     )
     return app_config
 
@@ -90,7 +103,7 @@ def test_role(db):
 @pytest.fixture
 def pending_enrollment(db, granting_user):
     enrollment = Enrollment.create(
-        'role', None, 'someone@example.com', granting_user, extra_data=dict(role='test'))
+        'role', 'record:1', 'someone@example.com', granting_user, extra_data=dict(role='test'))
     db.session.commit()
     return enrollment
 
@@ -148,4 +161,25 @@ def test_blueprint(users, app):
     blue.add_url_rule('_login/<user_id>', view_func=test_login)
 
     app.register_blueprint(blue)
+    return blue
+
+
+@pytest.fixture()
+def test_api_blueprint(users, api):
+    """Test blueprint with dynamically added testing endpoints."""
+    blue = Blueprint(
+        '_tests',
+        __name__,
+        url_prefix='/_tests/'
+    )
+
+    if blue.name in api.blueprints:
+        del api.blueprints[blue.name]
+
+    if api.view_functions.get('_tests.test_login') is not None:
+        del api.view_functions['_tests.test_login']
+
+    blue.add_url_rule('_login/<user_id>', view_func=test_login)
+
+    api.register_blueprint(blue)
     return blue
