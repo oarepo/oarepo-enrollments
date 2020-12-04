@@ -280,7 +280,7 @@ A database model containing enrollment status.
 
 ## REST API
 
-### Enrolling user
+### Enrolling user via POST
 
 ```
 POST /api/enroll/
