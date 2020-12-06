@@ -26,10 +26,10 @@ OAREPO_ENROLLMENT_DEFAULT_FAILURE_URL = '/enroll/failure/<key>'
 
 # pre-configured mail templates
 OAREPO_ENROLLMENT_MAIL_TEMPLATES = {
-    'template1': {
-        "subject": "subject jinja template",
-        "body": "body jinja template",
-        "html": True  # send as html mail
+    'default': {
+        'subject': 'You are being enrolled!',
+        'body': 'Click {{ enrollment_url }} to participate.',
+        'html': False
     }
 }
 
@@ -76,3 +76,10 @@ OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY = lambda enrollment=None, **kwargs: 
 # Factory (or import string) that returns Permission representing if user can revoke an enrollment.
 # The factory gets enrollment instance as ``enrollment: Enrollment`` named parameter.
 OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY = lambda enrollment=None, **kwargs: allow_all()
+
+#
+# cmdline
+#
+
+# user under which commandline tasks are logged
+OAREPO_ENROLLMENT_CMDLINE_USER = None

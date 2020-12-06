@@ -1,5 +1,7 @@
 # oarepo-enrollment
 
+
+
 [![image][]][1]
 [![image][2]][3]
 [![image][4]][5]
@@ -27,7 +29,6 @@ the enrollment is completed after the user registers.
 The enrollment might be "automatic" as well - that is, if the user already exists,
 no intervention is required from him/her.
 
-
 # Table of Contents
 * [Installation](#Installation)
 * [Usage](#Usage)
@@ -51,9 +52,14 @@ no intervention is required from him/her.
 		* [``OAREPO_ENROLLMENT_RETRIEVE_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_RETRIEVE_PERMISSION_FACTORY``)
 		* [``OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_ENROLL_PERMISSION_FACTORY``)
 		* [``OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY``](#``OAREPO_ENROLLMENT_REVOKE_PERMISSION_FACTORY``)
+* [Command-line tools](#Command-line-tools)
+	* [Listing enrollments on cmdline](#Listing-enrollments-on-cmdline)
+	* [Revoking enrollments on cmdline](#Revoking-enrollments-on-cmdline)
+	* [Creating enrollments on cmdline](#Creating-enrollments-on-cmdline)
 * [Configuration](#Configuration)
 * [Templates](#Templates)
 * [Signals](#Signals)
+
 
 ## Installation
 
@@ -466,6 +472,68 @@ The factory gets enrollment instance as ``enrollment: Enrollment`` named paramet
 For extensibility reasons the factory function must accept ``**kwargs``
 
 
+## Command-line tools
+
+### Listing enrollments on cmdline
+
+```bash
+$ invenio oarepo:enroll list --state=Revoked
+
+enrolled_user      id  key    operation                  recipient        state    type
+---------------  ----  -----  -------------------------  ---------------  -------  ------
+                    2  vscht  read,update,delete,create  simeki@vscht.cz  Revoked  role
+
+$ invenio oarepo:enroll list --state=Revoked --format=json
+[
+    {
+        "id": 2,
+        "type": "role",
+        "key": "vscht",
+        "recipient": "simeki@vscht.cz",
+        "enrolled_user": "",
+        "state": "Revoked",
+        "operation": "read,update,delete,create"
+    }
+]
+```
+
+Options:
+
+  * ``--enrollment-type`` - filter for this enrollment type
+  * ``--external-key`` - only return enrollments with this external key
+  * ``--state`` - only return enrollments in this state. Can be a list of
+    "Pending", "Success", "Accepted", "Not accepted", "User attached", "Failed", "Revoked"
+    separated by comma
+
+
+### Revoking enrollments on cmdline
+
+```bash
+$ invenio oarepo:enroll revoke <enrollment_id>
+```
+
+### Creating enrollments on cmdline
+
+```bash
+# invenio oarepo:enroll enroll <enrollment_type> <recipient_email> <external_key> <extra_data>
+$ invenio oarepo:enroll enroll role simeki@vscht.cz vscht role=test
+```
+
+Arguments:
+
+  * ``enrollment_type`` - the enrollment type for the new enrollment
+  * ``recipient_email`` - the email of the recipinet
+  * ``external_key`` - any string identifying the enrollment for out-of-this-library purposes
+  * ``extra_data`` - any extra data required by the enrollment's handler. Either use:
+     * `key=value`
+     * `{json_serialization of extra_data object}`
+
+Options:
+  * ``--email-template`` - the email template to be used. If unset, defaults to 'default'
+  * ``--enrollment-method`` - the enrollment method. Use 'automatic', 'manual', 'skip-email',
+     see above for the meaning
+  * ``--expiration`` - override the default enrollment expiration period
+
 ## Configuration
 
 ```python
@@ -508,12 +576,15 @@ OAREPO_ENROLLMENT_BASE_TEMPLATE = 'oarepo/enrollment/base.html'
 
 # pre-configured mail templates
 OAREPO_ENROLLMENT_MAIL_TEMPLATES = {
-    'test-template': {
+    'default': {
         'subject': 'You are being enrolled!',
         'body': 'Click {{ enrollment_url }} to participate.',
         'html': False
     }
 }
+
+# user under which commandline tasks (enroll, revoke) are logged
+OAREPO_ENROLLMENT_CMDLINE_USER = None
 ```
 
 ## Templates

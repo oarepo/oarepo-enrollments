@@ -1,5 +1,5 @@
 import enum
-from typing import Union
+from typing import Union, List
 from urllib.parse import urljoin
 
 from flask import render_template_string, url_for, current_app, request
@@ -238,5 +238,5 @@ def revoke(
             db.session.commit()
 
 
-def list_enrollments(external_key=None, enrollment_type=None, states=None):
+def list_enrollments(external_key=None, enrollment_type=None, states=None) -> List[Enrollment]:
     return Enrollment.list(external_key, enrollment_type, states)
