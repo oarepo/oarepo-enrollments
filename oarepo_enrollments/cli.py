@@ -8,9 +8,9 @@ from flask.cli import with_appcontext
 from invenio_accounts.models import User
 from tabulate import tabulate
 
-from oarepo_enrollment import enroll, list_enrollments as api_list_enrollments, revoke
-from oarepo_enrollment.api import EnrollmentMethod
-from oarepo_enrollment.models import Enrollment
+from oarepo_enrollments import enroll, list_enrollments as api_list_enrollments, revoke
+from oarepo_enrollments.api import EnrollmentMethod
+from oarepo_enrollments.models import Enrollment
 
 
 class CatchAll(click.Group):

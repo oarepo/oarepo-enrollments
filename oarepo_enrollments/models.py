@@ -11,8 +11,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
 from werkzeug.utils import cached_property
 
-from oarepo_enrollment.proxies import current_enrollment
-from oarepo_enrollment.signals import enrollment_linked, enrollment_failed, enrollment_successful, enrollment_revoked, \
+from oarepo_enrollments.proxies import current_enrollments
+from oarepo_enrollments.signals import enrollment_linked, enrollment_failed, enrollment_successful, enrollment_revoked, \
     revocation_failed, enrollment_accepted, enrollment_rejected, enrollment_duplicit_user
 
 
@@ -86,7 +86,7 @@ class Enrollment(db.Model):
         if not expiration_interval:
             expiration_interval = current_app.config['OAREPO_ENROLLMENT_EXPIRATION']
 
-        if not current_app.config.get('TESTING', False) and enrollment_type not in current_enrollment.handlers:
+        if not current_app.config.get('TESTING', False) and enrollment_type not in current_enrollments.handlers:
             raise AttributeError(f'No handler defined for enrollment type {enrollment_type}')
 
         enrolled_user = User.query.filter_by(email=enrolled_email).one_or_none()
@@ -114,7 +114,7 @@ class Enrollment(db.Model):
 
     @cached_property
     def handler(self):
-        return current_enrollment.handlers[self.enrollment_type](self)
+        return current_enrollments.handlers[self.enrollment_type](self)
 
     @property
     def expired(self):

@@ -1,4 +1,4 @@
-# oarepo-enrollment
+# oarepo-enrollments
 
 
 
@@ -8,16 +8,16 @@
 [![image][6]][7]
 [![image][8]][9]
 
-  [image]: https://img.shields.io/travis/oarepo/oarepo-enrollment.svg
-  [1]: https://travis-ci.com/oarepo/oarepo-enrollment
-  [2]: https://img.shields.io/coveralls/oarepo/oarepo-enrollment.svg
-  [3]: https://coveralls.io/r/oarepo/oarepo-enrollment
-  [4]: https://img.shields.io/github/tag/oarepo/oarepo-enrollment.svg
-  [5]: https://github.com/oarepo/oarepo-enrollment/releases
-  [6]: https://img.shields.io/pypi/dm/oarepo-enrollment.svg
-  [7]: https://pypi.python.org/pypi/oarepo-enrollment
-  [8]: https://img.shields.io/github/license/oarepo/oarepo-enrollment.svg
-  [9]: https://github.com/oarepo/oarepo-enrollment/blob/master/LICENSE
+  [image]: https://img.shields.io/travis/oarepo/oarepo-enrollments.svg
+  [1]: https://travis-ci.com/oarepo/oarepo-enrollments
+  [2]: https://img.shields.io/coveralls/oarepo/oarepo-enrollments.svg
+  [3]: https://coveralls.io/r/oarepo/oarepo-enrollments
+  [4]: https://img.shields.io/github/tag/oarepo/oarepo-enrollments.svg
+  [5]: https://github.com/oarepo/oarepo-enrollments/releases
+  [6]: https://img.shields.io/pypi/dm/oarepo-enrollments.svg
+  [7]: https://pypi.python.org/pypi/oarepo-enrollments
+  [8]: https://img.shields.io/github/license/oarepo/oarepo-enrollments.svg
+  [9]: https://github.com/oarepo/oarepo-enrollments/blob/master/LICENSE
 
 OArepo Enrollment library provides a unified way for admin, curator or other users
 to ask person to enroll in a "task". The task might be anything - for example,
@@ -64,7 +64,7 @@ no intervention is required from him/her.
 ## Installation
 
 ```bash
-    pip install oarepo-enrollment
+    pip install oarepo-enrollments
 ```
 
 ## Usage
@@ -75,10 +75,10 @@ To enroll user, call
 
 ```python
 
-from oarepo_enrollment import enroll
+from oarepo_enrollments import enroll
 
 enroll(
-    enrollment='role',
+    enrollment_type='role',
     recipient='sample.user@test.com',
     subject='You have become a curator !',
     body="""
@@ -136,7 +136,7 @@ Enrollment handler is a function with signature:
 
 ```python
 
-from oarepo_enrollment import EnrollmentHandler
+from oarepo_enrollments import EnrollmentHandler
 
 from invenio_accounts.models import User, Role
 from invenio_db import db
@@ -163,7 +163,7 @@ Register handler in setup.py:
 setup(
   # ...
   entry_points={
-    'oarepo_enrollment.enrollments': [
+    'oarepo_enrollments.enrollments': [
         'role = my.module:AssignRole',
     ],
   }
@@ -174,7 +174,7 @@ setup(
 
 ```python
 
-from oarepo_enrollment import revoke
+from oarepo_enrollments import revoke
 
 revoke(
     enrollment=<instance of enrollment, key or id>
@@ -188,7 +188,7 @@ by the key and enrollment type:
 
 ```python
 
-from oarepo_enrollment import list_enrollments
+from oarepo_enrollments import list_enrollments
 
 for enrollment in list_enrollments(external_key='test', enrollment_type='role'):
     print(enrollment)
@@ -200,7 +200,7 @@ for enrollment in list_enrollments(external_key='test', enrollment_type='role'):
 
 ```python
 
-from oarepo_enrollment import enroll, ENROLL_MANUALLY, ENROLL_AUTOMATICALLY, ENROLL_SKIP_EMAIL
+from oarepo_enrollments import enroll, ENROLL_MANUALLY, ENROLL_AUTOMATICALLY, ENROLL_SKIP_EMAIL
 
 def enroll(
     enrollment: str,
@@ -241,7 +241,7 @@ of the handler returns urls from the configuration
 ### ``EnrollmentHandler``
 
 ```python
-from oarepo_enrollment.models import Enrollment
+from oarepo_enrollments.models import Enrollment
 from invenio_accounts.models import User
 
 class EnrollmentHandler:
@@ -356,7 +356,7 @@ repository@UCT
 ```
 
 **Note:** Key or enrollment url (sent via email) is not returned for security reasons. If you need to pass it
-to javascript, make your own enrollment API. See [oarepo_enrollment/views/api.py](oarepo_enrollment/views/api.py)
+to javascript, make your own enrollment API. See [oarepo_enrollment/views/api.py](oarepo_enrollments/views/api.py)
 for details.
 
 ### List enrollments
@@ -603,60 +603,60 @@ If you use HTML views provided by this library, you can customize them as follow
 ## Signals
 
 ```python
-import oarepo_enrollment.signals
+import oarepo_enrollments.signals
 
-oarepo_enrollment.signals.enrollment_linked
+oarepo_enrollments.signals.enrollment_linked
 """Notifies receivers that enrollment has been linked to an invenio user
 
 :param  enrollment: the linked enrollment
 """
 
-oarepo_enrollment.signals.enrollment_created
+oarepo_enrollments.signals.enrollment_created
 """Notifies receivers that enrollment has been created.
 
 :param  enrollment: the linked enrollment
 :return True if no notification should be sent
 """
 
-oarepo_enrollment.signals.enrollment_accepted
+oarepo_enrollments.signals.enrollment_accepted
 """Notifies receivers that enrollment has been accepted (when accept is required)
 
 :param  enrollment: the accepted enrollment
 """
 
-oarepo_enrollment.signals.enrollment_rejected
+oarepo_enrollments.signals.enrollment_rejected
 """Notifies receivers that enrollment has been rejected (when accept is required)
 
 :param  enrollment: the rejected enrollment
 """
 
-oarepo_enrollment.signals.enrollment_successful
+oarepo_enrollments.signals.enrollment_successful
 """Notifies receivers that enrollment has been successfully carried out
 
 :param  enrollment: the successful enrollment
 """
 
-oarepo_enrollment.signals.enrollment_failed
+oarepo_enrollments.signals.enrollment_failed
 """Notifies receivers that enrollment failed.
 
 :param  enrollment: the failed enrollment
 :param  exception: failure exception
 """
 
-oarepo_enrollment.signals.enrollment_duplicit_user
+oarepo_enrollments.signals.enrollment_duplicit_user
 """Notifies receivers that the same enrollment is used by two different accounts.
 
 :param  enrollment: the failed enrollment
 :param  impostor: the second user that wants to use the enrollment
 """
 
-oarepo_enrollment.signals.enrollment_revoked
+oarepo_enrollments.signals.enrollment_revoked
 """Notifies receivers that enrollment has been successfully revoked
 
 :param  enrollment: the revoked enrollment
 """
 
-oarepo_enrollment.signals.revocation_failed
+oarepo_enrollments.signals.revocation_failed
 """Notifies receivers that revocation failed.
 
 :param  enrollment: the failed enrollment

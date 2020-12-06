@@ -7,7 +7,7 @@ from invenio_app.factory import create_app as factory_app
 from invenio_db import db as _db
 from sqlalchemy_utils import database_exists, create_database
 
-from oarepo_enrollment.models import Enrollment
+from oarepo_enrollments.models import Enrollment
 from .helpers import test_login
 
 

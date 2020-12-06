@@ -2,10 +2,10 @@
 #
 # Copyright (C) 2020 UCT Prague.
 #
-# oarepo-enrollment is free software; you can redistribute it and/or modify it under
+# oarepo-enrollments is free software; you can redistribute it and/or modify it under
 # the terms of the MIT License; see LICENSE file for more details.
 
-"""OArepo Enrollment library for record metadata validation"""
+"""OArepo Enrollments library for record metadata validation"""
 
 import os
 
@@ -42,21 +42,21 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join('oarepo_enrollment', 'version.py'), 'rt') as fp:
+with open(os.path.join('oarepo_enrollments', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
 setup(
-    name='oarepo-enrollment',
+    name='oarepo-enrollments',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
-    keywords='invenio oarepo user enrollment',
+    keywords='invenio oarepo user enrollments',
     license='MIT',
     author='UCT Prague',
     author_email='miroslav.simek@vscht.cz',
-    url='https://github.com/oarepo/oarepo-enrollment',
+    url='https://github.com/oarepo/oarepo-enrollments',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
@@ -67,25 +67,25 @@ setup(
     extras_require=extras_require,
     entry_points={
         'flask.commands': [
-            'oarepo:enroll = oarepo_enrollment.cli:enrollment',
+            'oarepo:enroll = oarepo_enrollments.cli:enrollments',
         ],
         'invenio_base.apps': [
-            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollmentExt',
+            'oarepo_enrollments = oarepo_enrollments.ext:OARepoEnrollmentsExt',
         ],
         'invenio_base.api_apps': [
-            'oarepo_enrollment = oarepo_enrollment.ext:OARepoEnrollmentExt',
+            'oarepo_enrollments = oarepo_enrollments.ext:OARepoEnrollmentsExt',
         ],
-        'oarepo_enrollment.enrollments': [
-            'role = oarepo_enrollment.builtin_handlers:AssignRole',
+        'oarepo_enrollments.enrollments': [
+            'role = oarepo_enrollments.builtin_handlers:AssignRole',
         ],
         'invenio_base.blueprints': [
-            'oarepo_enrollment = oarepo_enrollment.views.ui:create_blueprint_from_app',
+            'oarepo_enrollments = oarepo_enrollments.views.ui:create_blueprint_from_app',
         ],
         'invenio_base.api_blueprints': [
-            'oarepo_enrollment = oarepo_enrollment.views.api:create_blueprint_from_app',
+            'oarepo_enrollments = oarepo_enrollments.views.api:create_blueprint_from_app',
         ],
         'invenio_db.alembic': [
-            'oarepo_enrollment = oarepo_enrollment:alembic',
+            'oarepo_enrollments = oarepo_enrollments:alembic',
         ]
     },
     classifiers=[

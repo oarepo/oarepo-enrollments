@@ -6,8 +6,8 @@ from flask import render_template_string, url_for, current_app, request
 from flask_login import current_user
 from invenio_accounts.models import User
 
-from oarepo_enrollment.models import Enrollment
-from oarepo_enrollment.proxies import current_enrollment
+from oarepo_enrollments.models import Enrollment
+from oarepo_enrollments.proxies import current_enrollments
 from invenio_db import db
 from flask_mail import Message
 
@@ -122,9 +122,9 @@ def enroll(
     expiration_interval=None,
     extra_data=None
 ) -> Enrollment:
-    if enrollment_type not in current_enrollment.handlers:
+    if enrollment_type not in current_enrollments.handlers:
         raise AttributeError(
-            f'Unknown enrollment {enrollment_type}. Registered enrollment types: {list(current_enrollment.handlers.keys())}')
+            f'Unknown enrollment {enrollment_type}. Registered enrollment types: {list(current_enrollments.handlers.keys())}')
     if not recipient:
         raise AttributeError('Enrollment recipient must not be empty')
     if not sender:

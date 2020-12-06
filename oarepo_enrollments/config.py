@@ -49,7 +49,7 @@ OAREPO_ENROLLMENT_BASE_TEMPLATE = 'oarepo/enrollment/base.html'
 #
 # REST
 #
-OAREPO_ENROLLMENT_USER_RESTFUL_SERIALIZATION_CLASS = 'oarepo_enrollment.views.api.UserField'
+OAREPO_ENROLLMENT_USER_RESTFUL_SERIALIZATION_CLASS = 'oarepo_enrollments.views.api.UserField'
 
 #
 # Permissions

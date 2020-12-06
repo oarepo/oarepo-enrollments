@@ -5,14 +5,14 @@ from werkzeug.utils import cached_property
 from . import config
 
 
-class OARepoEnrollmentState:
+class OARepoEnrollmentsState:
     def __init__(self, app):
         self.app = app
 
     @cached_property
     def handlers(self):
         t = {}
-        for entry_point in pkg_resources.iter_entry_points('oarepo_enrollment.enrollments'):
+        for entry_point in pkg_resources.iter_entry_points('oarepo_enrollments.enrollments'):
             t[entry_point.name] = entry_point.load()
         return t
 
@@ -23,9 +23,9 @@ class OARepoEnrollmentState:
         return permission_filter
 
 
-class OARepoEnrollmentExt:
+class OARepoEnrollmentsExt:
     def __init__(self, app, db=None):
-        app.extensions['oarepo-enrollment'] = OARepoEnrollmentState(app)
+        app.extensions['oarepo-enrollments'] = OARepoEnrollmentsState(app)
         self.init_config(app)
 
     def init_config(self, app):

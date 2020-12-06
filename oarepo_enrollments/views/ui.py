@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, current_app
 from flask_login import current_user
 from invenio_db import db
 
-from oarepo_enrollment.models import Enrollment
+from oarepo_enrollments.models import Enrollment
 
 
 def create_blueprint_from_app(app):

@@ -1,5 +1,5 @@
-from oarepo_enrollment.api import list_enrollments
-from oarepo_enrollment.models import Enrollment
+from oarepo_enrollments.api import list_enrollments
+from oarepo_enrollments.models import Enrollment
 from mock import patch
 
 from tests.helpers import extra_entrypoints

@@ -10,9 +10,9 @@ from flask import request
 from webargs import fields
 from webargs.flaskparser import use_kwargs, use_args
 
-from oarepo_enrollment import revoke, enroll
-from oarepo_enrollment.models import Enrollment
-from oarepo_enrollment.proxies import current_enrollment
+from oarepo_enrollments import revoke, enroll
+from oarepo_enrollments.models import Enrollment
+from oarepo_enrollments.proxies import current_enrollments
 import flask_restful
 
 
@@ -107,7 +107,7 @@ class EnrollmentListResource(Resource, EnrollmentBase):
             state = [Enrollment.ENROLLMENT_STATUS_CHOICES_REVERSE.get(s, s) for s in state if s]
         enrollments = Enrollment.list(external_key=external_key, enrollment_type=enrollment_type, state=state)
 
-        query_filter = current_enrollment.list_permission_filter
+        query_filter = current_enrollments.list_permission_filter
         enrollments = query_filter(enrollments)
 
         pagination = Pagination(current_app, db)

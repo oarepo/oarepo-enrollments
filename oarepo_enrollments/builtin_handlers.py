@@ -2,7 +2,7 @@ from flask_babelex import gettext
 from invenio_accounts.models import User, Role
 from invenio_db import db
 
-from oarepo_enrollment.api import EnrollmentHandler
+from oarepo_enrollments.api import EnrollmentHandler
 
 
 class AssignRole(EnrollmentHandler):

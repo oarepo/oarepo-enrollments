@@ -1,7 +1,7 @@
 from flask_security import login_user
 from invenio_accounts.models import User
 
-from oarepo_enrollment.builtin_handlers import AssignRole, AssignRoleAccept
+from oarepo_enrollments.builtin_handlers import AssignRole, AssignRoleAccept
 
 
 def test_login(user_id=None):
@@ -20,7 +20,7 @@ class LiteEntryPoint:
 
 def extra_entrypoints(app, group=None, name=None):
     data = {
-        'oarepo_enrollment.enrollments': [
+        'oarepo_enrollments.enrollments': [
             LiteEntryPoint('role', AssignRole),
             LiteEntryPoint('role-accept', AssignRoleAccept),
         ],
