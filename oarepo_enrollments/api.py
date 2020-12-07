@@ -120,6 +120,7 @@ def enroll(
     commit=True,
     external_key: str = None,
     expiration_interval=None,
+    actions=None,
     extra_data=None
 ) -> Enrollment:
     if enrollment_type not in current_enrollments.handlers:
@@ -141,6 +142,7 @@ def enroll(
         success_url=success_url,
         failure_url=failure_url,
         expiration_interval=expiration_interval,
+        actions=actions,
         extra_data=extra_data or {})
 
     handler = db_enrollment.handler
@@ -238,5 +240,5 @@ def revoke(
             db.session.commit()
 
 
-def list_enrollments(external_key=None, enrollment_type=None, states=None) -> List[Enrollment]:
-    return Enrollment.list(external_key, enrollment_type, states)
+def list_enrollments(external_key=None, enrollment_type=None, states=None, actions=None) -> List[Enrollment]:
+    return Enrollment.list(external_key, enrollment_type, states, actions)

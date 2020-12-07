@@ -101,3 +101,14 @@ def test_list(linked_enrollment):
     assert list_enrollments(external_key='blah', enrollment_type='role', states=[
         Enrollment.LINKED
     ]).count() == 1
+
+
+@patch('pkg_resources.iter_entry_points', extra_entrypoints)
+def test_actions(db, granting_user):
+    enrollment = Enrollment.create('test', None, 'blah@google.com', granting_user,
+                                   actions=['read', 'update', 'delete'])
+    db.session.commit()
+    assert list(Enrollment.query.filter(Enrollment.actions.any('read'))) == [enrollment]
+    assert list(Enrollment.query.filter(Enrollment.actions.any('update'))) == [enrollment]
+    assert list(Enrollment.query.filter(Enrollment.actions.any('delete'))) == [enrollment]
+    assert list(Enrollment.query.filter(Enrollment.actions.any('blah'))) == []

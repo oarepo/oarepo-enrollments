@@ -64,7 +64,8 @@ def test_rest_get(app, api, db, pending_enrollment, granting_user, test_role, te
                     'revoker': None,
                     'start_timestamp': '2020-12-04T08:48:12.873987',
                     'state': 'Pending',
-                    'user_attached_timestamp': None
+                    'user_attached_timestamp': None,
+                    'actions': None
                 }
             )
             assert resp.status_code == 200
@@ -96,7 +97,8 @@ def test_rest_revoke(app, api, db, pending_enrollment, granting_user, test_role,
                     'revoker': {'email': 'granting@example.com'},
                     'start_timestamp': '2020-12-04T08:48:12.873987',
                     'state': 'Revoked',
-                    'user_attached_timestamp': None
+                    'user_attached_timestamp': None,
+                    'actions': None
                 }
             )
             assert resp.status_code == 200
@@ -138,7 +140,8 @@ def test_rest_enroll(app, api, db, pending_enrollment, granting_user, test_role,
                     'revoker': None,
                     'start_timestamp': '--timestamp--',
                     'state': 'Pending',
-                    'user_attached_timestamp': None
+                    'user_attached_timestamp': None,
+                    'actions': None
                 }
             )
             assert resp.status_code == 201

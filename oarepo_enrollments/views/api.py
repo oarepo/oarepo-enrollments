@@ -84,7 +84,8 @@ class EnrollmentBase:
             'rejected_timestamp': rf.DateTime(dt_format='iso8601'),
             'finalization_timestamp': rf.DateTime(dt_format='iso8601'),
             'revocation_timestamp': rf.DateTime(dt_format='iso8601'),
-            'failure_reason': rf.String
+            'failure_reason': rf.String,
+            'actions': rf.List(rf.String)
         }
 
 
@@ -121,7 +122,8 @@ class EnrollmentListResource(Resource, EnrollmentBase):
         'language': fields.Str(),
         'mode': fields.Str(),
         'external_key': fields.Str(),
-        'expiration_interval': fields.Int()
+        'expiration_interval': fields.Int(),
+        'actions': fields.List(fields.Str())
     })
     def post(self, args):
         extra_data = {k: v for k, v in request.json.items() if k not in args}

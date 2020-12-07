@@ -1,6 +1,7 @@
 # default mail link expiration is 14 days
 from invenio_records_rest.utils import allow_all
 
+# expiration
 OAREPO_ENROLLMENT_EXPIRATION = 14
 
 # url for redirection

@@ -5,12 +5,13 @@ import traceback
 from flask import current_app
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from base32_lib import base32
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
 from werkzeug.utils import cached_property
 
+from oarepo_enrollments.fields import StringArrayType
 from oarepo_enrollments.proxies import current_enrollments
 from oarepo_enrollments.signals import enrollment_linked, enrollment_failed, enrollment_successful, enrollment_revoked, \
     revocation_failed, enrollment_accepted, enrollment_rejected, enrollment_duplicit_user
@@ -59,6 +60,8 @@ class Enrollment(db.Model):
     ENROLLMENT_STATUS_CHOICES_REVERSE = {v: k for k, v in ENROLLMENT_STATUS_CHOICES}
     state = db.Column(ChoiceType(ENROLLMENT_STATUS_CHOICES), default=PENDING, nullable=False)
 
+    actions = db.Column(StringArrayType(256).with_variant(ARRAY(db.String()), dialect_name='postgresql'))
+
     start_timestamp = db.Column(db.DateTime(), nullable=False)
     expiration_timestamp = db.Column(db.DateTime(), nullable=True)
 
@@ -78,7 +81,7 @@ class Enrollment(db.Model):
     @classmethod
     def create(cls, enrollment_type, external_key, enrolled_email, granting_user, granting_email=None,
                accept_url=None, reject_url=None, success_url=None, failure_url=None,
-               expiration_interval=None, extra_data=None):
+               expiration_interval=None, extra_data=None, actions=None):
         if not extra_data:
             extra_data = {}
         if not granting_email:
@@ -104,6 +107,7 @@ class Enrollment(db.Model):
         e.failure_url = failure_url
         e.extra_data = extra_data
         e.external_key = external_key
+        e.actions = actions
         e.start_timestamp = datetime.datetime.now()
         e.expiration_timestamp = e.start_timestamp + datetime.timedelta(days=expiration_interval)
         if enrolled_user:
@@ -184,7 +188,7 @@ class Enrollment(db.Model):
         enrollment_rejected.send(self, enrollment=self)
 
     @classmethod
-    def list(cls, external_key=None, enrollment_type=None, state=None):
+    def list(cls, external_key=None, enrollment_type=None, state=None, actions=None):
         ret = None
         if external_key:
             if ret is None:
@@ -198,6 +202,14 @@ class Enrollment(db.Model):
             if ret is None:
                 ret = cls.query
             ret = ret.filter(cls.state.in_(state))
+        if actions:
+            if ret is None:
+                ret = cls.query
+            if isinstance(actions, (list, tuple)):
+                for a in actions:
+                    ret = ret.filter(cls.actions.any(a))
+            else:
+                ret = ret.filter(cls.actions.any(actions))
         if ret is None:
             ret = cls.query
         return ret

@@ -25,7 +25,7 @@ class CatchAll(click.Group):
 
 
 @click.group(name='oarepo:enroll', cls=CatchAll)
-def enrollment():
+def enrollments():
     """OARepo record drafts commands."""
 
 
@@ -39,7 +39,7 @@ def parse_enrollment_method(method):
     }.get(method.lower().replace('-', '_'))
 
 
-@enrollment.command('enroll')
+@enrollments.command('enroll')
 @click.argument('enrollment-type')
 @click.argument('recipient')
 @click.argument('external-key', required=False)
@@ -68,7 +68,7 @@ def enroll_user(enrollment_type, recipient, external_key, extra_data, email_temp
             extra_data[k[0]] = k[1]
         else:
             external_key = k
-
+    actions = extra_data.pop('actions', None)
     enroll(
         enrollment_type=enrollment_type,
         recipient=recipient,
@@ -77,6 +77,7 @@ def enroll_user(enrollment_type, recipient, external_key, extra_data, email_temp
         extra_data=extra_data,
         email_template=email_template,
         mode=parse_enrollment_method(enrollment_method),
+        actions=actions,
         expiration_interval=int(expiration) if expiration else None
     )
 
@@ -92,20 +93,22 @@ def parse_states(states):
     return ret
 
 
-@enrollment.command('list')
+@enrollments.command('list')
 @click.option('--enrollment-type')
 @click.option('--external-key')
 @click.option('--state',
               help='An array of "Pending", "Success", "Accepted", "Not accepted", '
                    '"User attached", "Failed", "Revoked" separated by comma')
+@click.option('--actions',
+              help='Comma-separated list of actions')
 @click.option('--format', default='simple')
 @with_appcontext
-def list_enrollments(enrollment_type=None, external_key=None, state=None, format=None):
+def list_enrollments(enrollment_type=None, external_key=None, state=None, format=None, actions=None):
     """
     List enrollments with optional filtering
     """
     enrollments = api_list_enrollments(external_key=external_key, enrollment_type=enrollment_type,
-                                       states=parse_states(state))
+                                       states=parse_states(state), actions=actions)
     enrollments = [
         {
             'id': x.id,
@@ -114,6 +117,7 @@ def list_enrollments(enrollment_type=None, external_key=None, state=None, format
             'recipient': x.enrolled_email,
             'enrolled_user': x.enrolled_user.email if x.enrolled_user else '',
             'state': str(x.state),
+            'actions': str(x.actions),
             **(x.extra_data or {}),
         }
         for x in enrollments
@@ -124,7 +128,8 @@ def list_enrollments(enrollment_type=None, external_key=None, state=None, format
             'key',
             'recipient',
             'enrolled_user',
-            'state'
+            'state',
+            'actions'
         }
         for x in enrollments:
             column_names.update(x.keys())
@@ -140,7 +145,7 @@ def list_enrollments(enrollment_type=None, external_key=None, state=None, format
         print(json.dumps(enrollments, ensure_ascii=False, indent=4))
 
 
-@enrollment.command('revoke')
+@enrollments.command('revoke')
 @click.argument('id', type=int)
 @with_appcontext
 def revoke_enrollment(id=None):

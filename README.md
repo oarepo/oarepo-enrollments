@@ -218,6 +218,7 @@ def enroll(
     failure_url='url',       # override the failure url
     commit=True,             # commit the changes
     external_key=None,       # set an external key (any string)
+    actions=None,            # actions
     **kwargs                 # any kwargs
 ) -> None:
     pass
@@ -237,6 +238,11 @@ The **``mode``** parameter can be:
 
 **``urls``** if passed override the default urls returned by the handler. The default implementation
 of the handler returns urls from the configuration
+
+**Actions** might be an array of strings associated with the enrollment. They can be used
+to provide searchable granularity to enrollments. For example, if the enrollment means
+"right to a collection", the actions might be an array of "read", "update", "delete".
+
 
 ### ``EnrollmentHandler``
 
@@ -300,7 +306,8 @@ POST /api/enroll/
     mode: "manual | automatic | skip_email",
     external_key: "caller key - any - for later identification",
     // any args that will get passed to the handler
-    role: 'test'
+    role: 'test',
+    actions: ['test']
 }
 ```
 Returns:
@@ -327,7 +334,8 @@ Returns:
     'rejected_timestamp': null,
     'revocation_timestamp': null,
     'revoker': null,
-    'user_attached_timestamp': null
+    'user_attached_timestamp': null,
+    'actions': ['test']
 }
 ```
 
@@ -407,6 +415,7 @@ Returns:
         "role": "test"
     },
     "state": "Pending",
+    "actions": ["test"],
     "start_timestamp": "Thu, 03 Dec 2020 21:26:40 -0000",
     "expiration_timestamp": "Thu, 17 Dec 2020 21:26:40 -0000",
     "user_attached_timestamp": null,
@@ -492,7 +501,8 @@ $ invenio oarepo:enroll list --state=Revoked --format=json
         "recipient": "simeki@vscht.cz",
         "enrolled_user": "",
         "state": "Revoked",
-        "operation": "read,update,delete,create"
+        "operation": "read,update,delete,create",
+        "actions": []
     }
 ]
 ```
@@ -504,6 +514,7 @@ Options:
   * ``--state`` - only return enrollments in this state. Can be a list of
     "Pending", "Success", "Accepted", "Not accepted", "User attached", "Failed", "Revoked"
     separated by comma
+  * ``--actions`` - only return enrollments with these comma-separated actions
 
 
 ### Revoking enrollments on cmdline
