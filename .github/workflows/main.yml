@@ -67,7 +67,7 @@ jobs:
       #        with:
       #          parallel-finished: true
 
-      - name Build package to publish
+      - name: Build package to publish
         run: |
           python setup.py sdist bdist_wheel
 
