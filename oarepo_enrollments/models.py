@@ -5,13 +5,14 @@ import traceback
 from flask import current_app
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy import ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from base32_lib import base32
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils import ChoiceType
 from werkzeug.utils import cached_property
 
-from oarepo_enrollments.fields import StringArrayType
+from oarepo_enrollments.fields import StringArrayType, StringArray
 from oarepo_enrollments.proxies import current_enrollments
 from oarepo_enrollments.signals import enrollment_linked, enrollment_failed, enrollment_successful, enrollment_revoked, \
     revocation_failed, enrollment_accepted, enrollment_rejected, enrollment_duplicit_user
@@ -60,7 +61,11 @@ class Enrollment(db.Model):
     ENROLLMENT_STATUS_CHOICES_REVERSE = {v: k for k, v in ENROLLMENT_STATUS_CHOICES}
     state = db.Column(ChoiceType(ENROLLMENT_STATUS_CHOICES), default=PENDING, nullable=False)
 
-    actions = db.Column(StringArrayType(256).with_variant(ARRAY(db.String()), dialect_name='postgresql'))
+    actions = db.Column(
+        StringArray().with_variant(
+            StringArrayType(256),
+            dialect_name='sqlite')
+    )
 
     start_timestamp = db.Column(db.DateTime(), nullable=False)
     expiration_timestamp = db.Column(db.DateTime(), nullable=True)
