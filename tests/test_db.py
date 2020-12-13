@@ -1,7 +1,11 @@
+from invenio_accounts.models import User
+
+from oarepo_enrollments import EnrollmentHandler
 from oarepo_enrollments.api import list_enrollments
 from oarepo_enrollments.models import Enrollment
 from mock import patch
 
+from oarepo_enrollments.proxies import current_enrollments
 from tests.helpers import extra_entrypoints
 
 
@@ -112,3 +116,83 @@ def test_actions(db, granting_user):
     assert list(Enrollment.query.filter(Enrollment.actions.any('update'))) == [enrollment]
     assert list(Enrollment.query.filter(Enrollment.actions.any('delete'))) == [enrollment]
     assert list(Enrollment.query.filter(Enrollment.actions.any('blah'))) == []
+
+
+def test_dependent_enrollments_link(db, granting_user, enrolled_user):
+    parent_enrollment = Enrollment.create(
+        'test', None, 'blah@google.com', granting_user,
+        actions=['read', 'update', 'delete'])
+
+    dependent_enrollment_1 = Enrollment.create(
+        'dependent', None, 'blah@google.com', granting_user, parent_enrollment=parent_enrollment)
+
+    dependent_enrollment_2 = Enrollment.create(
+        'dependent', None, 'blah@google.com', granting_user, parent_enrollment=parent_enrollment)
+
+    db.session.commit()
+
+    assert dependent_enrollment_1.state == parent_enrollment.state
+    assert dependent_enrollment_2.state == parent_enrollment.state
+
+    parent_enrollment.attach_user(enrolled_user)
+
+    assert parent_enrollment.enrolled_user == enrolled_user
+    assert parent_enrollment.state == Enrollment.LINKED
+
+    assert dependent_enrollment_1.enrolled_user == enrolled_user
+    assert dependent_enrollment_1.enrolled_user == enrolled_user
+    assert dependent_enrollment_1.state == parent_enrollment.state
+    assert dependent_enrollment_2.state == parent_enrollment.state
+
+
+def test_dependent_enrollments_enroll_revoke(db, granting_user, enrolled_user):
+    class TestEnrollmentHandler(EnrollmentHandler):
+        enroll_count = 0
+
+        def enroll(self, user: User, **kwargs) -> None:
+            TestEnrollmentHandler.enroll_count += 1
+
+        def revoke(self, user: User, **kwargs) -> None:
+            TestEnrollmentHandler.enroll_count -= 1
+
+    current_enrollments.handlers['test'] = TestEnrollmentHandler
+    current_enrollments.handlers['dependent'] = TestEnrollmentHandler
+
+    try:
+        parent_enrollment = Enrollment.create(
+            'test', None, 'blah@google.com', granting_user,
+            actions=['read', 'update', 'delete'])
+
+        dependent_enrollment_1 = Enrollment.create(
+            'dependent', None, 'blah@google.com', granting_user, parent_enrollment=parent_enrollment)
+
+        dependent_enrollment_2 = Enrollment.create(
+            'dependent', None, 'blah@google.com', granting_user, parent_enrollment=parent_enrollment)
+
+        db.session.commit()
+
+        parent_enrollment.enroll(enrolled_user)
+
+        assert parent_enrollment.enrolled_user == enrolled_user
+        assert parent_enrollment.state == Enrollment.SUCCESS
+
+        assert dependent_enrollment_1.enrolled_user == enrolled_user
+        assert dependent_enrollment_1.enrolled_user == enrolled_user
+        assert dependent_enrollment_1.state == parent_enrollment.state
+        assert dependent_enrollment_2.state == parent_enrollment.state
+
+        assert TestEnrollmentHandler.enroll_count == 3
+
+        parent_enrollment.revoke(granting_user)
+
+        assert parent_enrollment.enrolled_user == enrolled_user
+        assert parent_enrollment.state == Enrollment.REVOKED
+
+        assert dependent_enrollment_1.state == parent_enrollment.state
+        assert dependent_enrollment_2.state == parent_enrollment.state
+
+        assert TestEnrollmentHandler.enroll_count == 0
+
+    finally:
+        current_enrollments.handlers.pop('test')
+        current_enrollments.handlers.pop('dependent')

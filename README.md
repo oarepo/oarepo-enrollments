@@ -29,6 +29,9 @@ the enrollment is completed after the user registers.
 The enrollment might be "automatic" as well - that is, if the user already exists,
 no intervention is required from him/her.
 
+Enrollments can be grouped into one parent - that is, if user enrolls into parent enrollment,
+he will be automatically enrolled into the children enrollments.
+
 # Table of Contents
 * [Installation](#Installation)
 * [Usage](#Usage)
@@ -219,6 +222,7 @@ def enroll(
     commit=True,             # commit the changes
     external_key=None,       # set an external key (any string)
     actions=None,            # actions
+    parent_enrollment=None,  # parent enrollment
     **kwargs                 # any kwargs
 ) -> None:
     pass
@@ -242,6 +246,11 @@ of the handler returns urls from the configuration
 **Actions** might be an array of strings associated with the enrollment. They can be used
 to provide searchable granularity to enrollments. For example, if the enrollment means
 "right to a collection", the actions might be an array of "read", "update", "delete".
+
+**``parent_enrollment``** is an enrollment that will control the state of this one.
+If it is specified, no email is sent as it is supposed that one has been already
+sent for the parent enrollment. If the state of the parent enrollment changes, the
+state of this one is changed accordingly.
 
 
 ### ``EnrollmentHandler``

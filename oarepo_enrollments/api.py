@@ -121,7 +121,8 @@ def enroll(
     external_key: str = None,
     expiration_interval=None,
     actions=None,
-    extra_data=None
+    extra_data=None,
+    parent_enrollment=None
 ) -> Enrollment:
     if enrollment_type not in current_enrollments.handlers:
         raise AttributeError(
@@ -143,7 +144,15 @@ def enroll(
         failure_url=failure_url,
         expiration_interval=expiration_interval,
         actions=actions,
-        extra_data=extra_data or {})
+        extra_data=extra_data or {},
+        parent_enrollment=parent_enrollment)
+
+    if parent_enrollment:
+        parent_enrollment.process_dependent_enrollment(db_enrollment)
+        if commit:
+            db.session.commit()
+        return db_enrollment
+
 
     handler = db_enrollment.handler
     tmpl = handler.email_template

@@ -83,10 +83,13 @@ class Enrollment(db.Model):
     success_url = db.Column(db.String(256))
     failure_url = db.Column(db.String(256))
 
+    parent_enrollment_id = db.Column(db.Integer, db.ForeignKey(id), nullable=True, name="parent_enrollment")
+    parent_enrollment = relationship("Enrollment", backref='dependent_enrollments', remote_side=id)
+
     @classmethod
     def create(cls, enrollment_type, external_key, enrolled_email, granting_user, granting_email=None,
                accept_url=None, reject_url=None, success_url=None, failure_url=None,
-               expiration_interval=None, extra_data=None, actions=None):
+               expiration_interval=None, extra_data=None, actions=None, parent_enrollment=None):
         if not extra_data:
             extra_data = {}
         if not granting_email:
@@ -118,6 +121,8 @@ class Enrollment(db.Model):
         if enrolled_user:
             e.state = Enrollment.LINKED
             e.user_attached_timestamp = datetime.datetime.now()
+        if parent_enrollment:
+            e.parent_enrollment_id = parent_enrollment.id
         db.session.add(e)
         return e
 
@@ -138,31 +143,34 @@ class Enrollment(db.Model):
             return False
         return True
 
-    def attach_user(self, user):
+    def attach_user(self, user, timestamp=None):
         assert self.state == Enrollment.PENDING
         self.state = Enrollment.LINKED
-        self.user_attached_timestamp = datetime.datetime.now()
+        self.user_attached_timestamp = timestamp or datetime.datetime.now()
         self.enrolled_user = user
         enrollment_linked.send(self, enrollment=self)
         db.session.add(self)
+        self.process_dependent_enrollments()
 
-    def enroll(self, user):
+    def enroll(self, user, timestamp=None):
         try:
             self.handler.enroll(user, **self.extra_data)
             self.state = Enrollment.SUCCESS
             self.enrolled_user = user
-            self.finalization_timestamp = datetime.datetime.now()
+            self.finalization_timestamp = timestamp or datetime.datetime.now()
             enrollment_successful.send(self, enrollment=self)
             db.session.add(self)
         except Exception as e:
             self.state = Enrollment.FAILURE
             self.failure_reason = getattr(e, 'message', str(e))
             enrollment_failed.send(self, enrollment=self, exception=e)
-            self.finalization_timestamp = datetime.datetime.now()
+            self.finalization_timestamp = timestamp or datetime.datetime.now()
             db.session.add(self)
             raise
+        finally:
+            self.process_dependent_enrollments()
 
-    def revoke(self, revoker):
+    def revoke(self, revoker, timestamp=None):
         if revoker and revoker.is_anonymous:
             revoker = None
         self.revoker = revoker
@@ -170,27 +178,31 @@ class Enrollment(db.Model):
             self.state = Enrollment.REVOKED
             if self.enrolled_user:
                 self.handler.revoke(self.enrolled_user, **self.extra_data)
-            self.revocation_timestamp = datetime.datetime.now()
+            self.revocation_timestamp = timestamp or datetime.datetime.now()
             db.session.add(self)
             enrollment_revoked.send(self, enrollment=self)
         except Exception as e:
             self.failure_reason = getattr(e, 'message', str(e))
-            self.revocation_timestamp = datetime.datetime.now()
+            self.revocation_timestamp = timestamp or datetime.datetime.now()
             db.session.add(self)
             revocation_failed.send(self, enrollment=self, exception=e)
             raise
+        finally:
+            self.process_dependent_enrollments()
 
-    def accept(self):
+    def accept(self, timestamp=None):
         self.state = Enrollment.ACCEPTED
-        self.accepted_timestamp = datetime.datetime.now()
+        self.accepted_timestamp = timestamp or datetime.datetime.now()
         db.session.add(self)
         enrollment_accepted.send(self, enrollment=self)
+        self.process_dependent_enrollments()
 
-    def reject(self):
+    def reject(self, timestamp=None):
         self.state = Enrollment.REJECTED
-        self.rejected_timestamp = datetime.datetime.now()
+        self.rejected_timestamp = timestamp or datetime.datetime.now()
         db.session.add(self)
         enrollment_rejected.send(self, enrollment=self)
+        self.process_dependent_enrollments()
 
     @classmethod
     def list(cls, external_key=None, enrollment_type=None, state=None, actions=None):
@@ -239,3 +251,22 @@ class Enrollment(db.Model):
         if self.external_key:
             ret = f'external key={self.external_key}, {ret}'
         return f'Enrollment[key={self.key}, {ret}'
+
+    def process_dependent_enrollments(self):
+        for enrollment in self.dependent_enrollments:
+            self.process_dependent_enrollment(enrollment)
+
+    def process_dependent_enrollment(self, enrollment):
+        if self.state == Enrollment.LINKED:
+            enrollment.attach_user(self.enrolled_user, self.user_attached_timestamp)
+        elif self.state == Enrollment.ACCEPTED:
+            enrollment.accept(self.accepted_timestamp)
+        elif self.state == Enrollment.REJECTED:
+            enrollment.reject(self.rejected_timestamp)
+        elif self.state == Enrollment.SUCCESS:
+            enrollment.enroll(self.enrolled_user, self.finalization_timestamp)
+        elif self.state == Enrollment.FAILURE:
+            # do nothing here ...
+            pass
+        elif self.state == Enrollment.REVOKED:
+            enrollment.revoke(self.revoker, self.revocation_timestamp)
