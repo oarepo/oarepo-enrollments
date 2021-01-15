@@ -174,14 +174,14 @@ def enroll(
             if mode == EnrollmentMethod.SKIP_EMAIL:
                 # enroll the user automatically, do not send email
                 try:
-                    return db_enrollment.enroll()
+                    return db_enrollment.enroll(db_enrollment.enrolled_user)
                 finally:
                     if commit:
                         db.session.commit()
             elif mode == EnrollmentMethod.AUTOMATIC:
                 # enroll the user automatically and send email
                 try:
-                    db_enrollment.enroll()
+                    db_enrollment.enroll(db_enrollment.enrolled_user)
                 except:
                     if commit:
                         db.session.commit()
