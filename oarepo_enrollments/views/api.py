@@ -1,6 +1,6 @@
 from functools import lru_cache, wraps, cached_property
 
-from flask import current_app, Blueprint
+from flask import current_app, Blueprint, jsonify
 from flask_login import current_user
 from flask_rest_paginate import Pagination
 from flask_restful import Resource, abort, Api, fields as rf, output_json
@@ -14,6 +14,10 @@ from oarepo_enrollments import revoke, enroll
 from oarepo_enrollments.models import Enrollment
 from oarepo_enrollments.proxies import current_enrollments
 import flask_restful
+
+import logging
+
+log = logging.getLogger('oarepo_enrollments')
 
 
 class UserField(rf.Nested):
@@ -144,14 +148,30 @@ class EnrollmentDetailResource(Resource, EnrollmentBase):
         return flask_restful.marshal(enrollment, self.enrollment_fields)
 
 
+class EnrollmentAcceptResource(Resource):
+    def post(self, enrollment_id=None):
+        try:
+            enrollment = Enrollment.query.filter_by(key=enrollment_id).one()
+            enrollment.accept()
+            db.session.commit()
+            return jsonify(
+                status='ok',
+                url=enrollment.handler.success_url
+            )
+        except Exception as e:  # noqa
+            log.exception('Exception in enrollment processing: %s', str(e))
+            return jsonify(status='error', message=str(e))
+
+
 def create_blueprint_from_app(app):
     blueprint = Blueprint(
         'enrollment_rest',
         __name__,
         template_folder='templates',
-        url_prefix='/api/enroll/',
+        url_prefix='/enroll/',
     )
     api = Api(blueprint)
     api.add_resource(EnrollmentDetailResource, '<int:id>', endpoint='detail')
+    api.add_resource(EnrollmentAcceptResource, 'accept/<enrollment_id>', endpoint='enroll')
     api.add_resource(EnrollmentListResource, '', endpoint='list')
     return blueprint

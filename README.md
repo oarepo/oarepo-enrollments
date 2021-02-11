@@ -454,6 +454,28 @@ Returns:
 }
 ```
 
+### Accepting enrollment
+
+```
+POST /api/enroll/accept/<key>
+```
+Returns:
+```json5
+{
+    status: 'ok',
+    url: '<success url>'
+}
+```
+
+or
+
+```json5
+{
+    status: 'error',
+    message: '<error message>'
+}
+```
+
 
 ### Security
 
