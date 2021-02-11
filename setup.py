@@ -23,7 +23,8 @@ install_requires = [
 
 tests_require = [
     'pytest',
-    f'oarepo[tests]~={OAREPO_VERSION}'
+    f'oarepo[tests]~={OAREPO_VERSION}',
+    'mock'
 ]
 
 extras_require = {
