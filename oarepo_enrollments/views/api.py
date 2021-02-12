@@ -152,15 +152,54 @@ class EnrollmentAcceptResource(Resource):
     def post(self, enrollment_id=None):
         try:
             enrollment = Enrollment.query.filter_by(key=enrollment_id).one()
-            enrollment.accept()
-            db.session.commit()
-            return jsonify(
-                status='ok',
-                url=enrollment.handler.success_url
-            )
+
+            if not enrollment.check_user_allowed(current_user):
+                return jsonify(status='error', message='Not allowed')
+
+            # user clicked on the link in email more than once
+            if enrollment.state == Enrollment.SUCCESS:
+                return jsonify(
+                    status='ok',
+                    url=enrollment.handler.success_url
+                )
+
+            # if pending, associate with the current user
+            if enrollment.state == Enrollment.PENDING:
+                enrollment.attach_user(current_user)
+
+            # if user is associated and acceptance is required, redirect to accept page
+            if enrollment.state in (Enrollment.LINKED, Enrollment.REJECTED):
+                if enrollment.handler.acceptance_required:
+                    return jsonify(
+                        status='acceptance_pending'
+                    )
+                else:
+                    # otherwise just mark as accepted automatically
+                    enrollment.accept()
+
+            # if already expired, fail
+            if enrollment.expired:
+                enrollment.state = Enrollment.FAILURE
+                enrollment.failure_reason = 'This enrollment has already expired'
+                db.session.add(enrollment)
+                return jsonify(status='error', message='Expired')
+
+            # if accepted, try to enroll (moving to SUCCESS state) and redirect to success url
+            # on error, move to FAILED state and redirect to failure url
+            if enrollment.state == Enrollment.ACCEPTED:
+                enrollment.enroll(current_user)
+                return jsonify(
+                    status='ok',
+                    url=enrollment.handler.success_url
+                )
+            return jsonify(status='error', message='Failed')
+
         except Exception as e:  # noqa
             log.exception('Exception in enrollment processing: %s', str(e))
             return jsonify(status='error', message=str(e))
+
+        finally:
+            db.session.commit()
 
 
 def create_blueprint_from_app(app):
@@ -168,10 +207,10 @@ def create_blueprint_from_app(app):
         'enrollment_rest',
         __name__,
         template_folder='templates',
-        url_prefix='/enroll/',
+        url_prefix='/enrollments/',
     )
     api = Api(blueprint)
     api.add_resource(EnrollmentDetailResource, '<int:id>', endpoint='detail')
-    api.add_resource(EnrollmentAcceptResource, 'accept/<enrollment_id>', endpoint='enroll')
+    api.add_resource(EnrollmentAcceptResource, 'enroll/<enrollment_id>', endpoint='enroll')
     api.add_resource(EnrollmentListResource, '', endpoint='list')
     return blueprint

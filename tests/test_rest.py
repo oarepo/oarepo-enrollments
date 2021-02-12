@@ -11,7 +11,7 @@ from tests.helpers import extra_entrypoints, dedate
 def test_rest_list_enrollments(app, api, db, pending_enrollment, granting_user, test_role, test_blueprint):
     with api.app_context():
         with api.test_client() as client:
-            resp = client.get('/enroll/')
+            resp = client.get('/enrollments/')
             assert resp.status_code == 200
             # print(json.dumps(resp.json, indent=4))
             pagination = resp.json['pagination']
@@ -20,22 +20,22 @@ def test_rest_list_enrollments(app, api, db, pending_enrollment, granting_user, 
             assert data[0]['state'] == 'Pending'
             assert data[0]['id'] == 1
 
-            resp = client.get('/enroll/', data={
+            resp = client.get('/enrollments/', data={
                 'external_key': 'record:1'
             })
             assert resp.json['pagination']['totalElements'] == 1
 
-            resp = client.get('/enroll/', data={
+            resp = client.get('/enrollments/', data={
                 'enrollment_type': 'role'
             })
             assert resp.json['pagination']['totalElements'] == 1
 
-            resp = client.get('/enroll/', data={
+            resp = client.get('/enrollments/', data={
                 'state': 'Pending'
             })
             assert resp.json['pagination']['totalElements'] == 1
 
-            resp = client.get('/enroll/', data={
+            resp = client.get('/enrollments/', data={
                 'state': 'Pending,Success'
             })
             assert resp.json['pagination']['totalElements'] == 1
@@ -45,7 +45,7 @@ def test_rest_list_enrollments(app, api, db, pending_enrollment, granting_user, 
 def test_rest_get(app, api, db, pending_enrollment, granting_user, test_role, test_blueprint):
     with api.app_context():
         with api.test_client() as client:
-            resp = client.get('/enroll/1')
+            resp = client.get('/enrollments/1')
             assert dedate(resp.json) == dedate(
                 {
                     'accepted_timestamp': None,
@@ -78,7 +78,7 @@ def test_rest_revoke(app, api, db, pending_enrollment, granting_user, test_role,
             resp = client.get(f'/_tests/_login/{granting_user.id}')
             assert resp.status_code == 200
 
-            resp = client.delete('/enroll/1')
+            resp = client.delete('/enrollments/1')
             assert dedate(resp.json) == dedate(
                 {
                     'accepted_timestamp': None,
@@ -111,7 +111,7 @@ def test_rest_enroll(app, api, db, pending_enrollment, granting_user, test_role,
             resp = client.get(f'/_tests/_login/{granting_user.id}')
             assert resp.status_code == 200
 
-            resp = client.post('/enroll/',
+            resp = client.post('/enrollments/',
                                data=json.dumps({
                                    'enrollment_type': "role",
                                    'recipient': "someone@example.com",
